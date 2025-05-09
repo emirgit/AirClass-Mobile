@@ -1,6 +1,7 @@
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { Ionicons } from "@expo/vector-icons";
 
 export function SlideControl() {
     const { sendMessage } = useWebSocket();
@@ -22,10 +23,10 @@ export function SlideControl() {
     return (
         <View style={styles.container}>
             <TouchableOpacity style={[styles.button]} onPress={handlePrevious}>
-                <Text style={styles.buttonText}>Previous</Text>
+                <Ionicons name="chevron-back" size={32} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button]} onPress={handleNext}>
-                <Text style={styles.buttonText}>Next</Text>
+                <Ionicons name="chevron-forward" size={32} color="#fff" />
             </TouchableOpacity>
         </View>
     );
@@ -37,18 +38,25 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         padding: 16,
         gap: 16,
+        backgroundColor: "#F3F4F6",
+        borderRadius: 12,
+        marginHorizontal: 16,
     },
     button: {
         flex: 1,
         backgroundColor: "#2563EB",
-        paddingVertical: 12,
+        paddingVertical: 16,
         paddingHorizontal: 24,
         borderRadius: 8,
         alignItems: "center",
-    },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
     },
 });
