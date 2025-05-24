@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
+const REDIRECT_URI = 'http://localhost:8081/(tabs)';
+
 export default function HomeScreen() {
     const [classroomCode, setClassroomCode] = useState("");
     const router = useRouter();
@@ -22,6 +24,7 @@ export default function HomeScreen() {
             pathname: "/classroom",
             params: { code: classroomCode.trim() },
         });
+        router.replace('/(tabs)');
     };
 
     return (
