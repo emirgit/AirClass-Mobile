@@ -1,39 +1,93 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+    ActivityIndicator,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
     const handleLogin = async () => {
         setIsLoading(true);
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter both email and password');
+            Alert.alert("Error", "Please enter both email and password");
             setIsLoading(false);
             return;
         }
-        const userData = await AsyncStorage.getItem(`user:${email}`);
-        if (!userData) {
-            Alert.alert('Login Failed', 'User not found');
+        try {
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/auth/login",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password }),
+                }
+            )
+                .then((res) => res.json())
+                .then(async (data) => {
+                    console.log("Login response data:", data);
+                    if (data.data && data.data.token) {
+                        try {
+                            console.log("Storing token and user data...");
+                            await AsyncStorage.setItem(
+                                "jwtToken",
+                                data.data.token
+                            );
+                            await AsyncStorage.setItem(
+                                "userEmail",
+                                data.data.user.email
+                            );
+                            await AsyncStorage.setItem(
+                                "userName",
+                                data.data.user.name
+                            );
+                            console.log(
+                                "Data stored successfully, navigating to classroom..."
+                            );
+                            Alert.alert(
+                                "Login Successful",
+                                `Welcome ${data.data.user.name}!`
+                            );
+                            // Use setTimeout to ensure Alert is shown before navigation
+                            setTimeout(() => {
+                                console.log(
+                                    "Attempting navigation to classroom..."
+                                );
+                                router.replace("/classroom");
+                            }, 100);
+                        } catch (storageError) {
+                            console.error("Error storing data:", storageError);
+                            Alert.alert("Error", "Failed to save login data");
+                        }
+                    } else {
+                        console.log("Login failed - no token in response");
+                        Alert.alert(
+                            "Login Failed",
+                            data.message || "Invalid credentials"
+                        );
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                    Alert.alert("Error", "Network or server error");
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        } catch (err) {
+            Alert.alert("Error", "Network or server error");
             setIsLoading(false);
-            return;
         }
-        const user = JSON.parse(userData);
-        if (user.password !== password) {
-            Alert.alert('Login Failed', 'Incorrect password');
-            setIsLoading(false);
-            return;
-        }
-        // Save session info
-        await AsyncStorage.setItem('userEmail', user.email);
-        await AsyncStorage.setItem('userName', user.name);
-        Alert.alert('Login Successful', `Welcome ${user.name}!`);
-        setIsLoading(false);
-        router.replace('/classroom');
     };
 
     return (
@@ -65,7 +119,7 @@ export default function LoginScreen() {
                     <Text style={styles.buttonText}>Sign In</Text>
                 )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.replace('/register')}>
+            <TouchableOpacity onPress={() => router.replace("/register")}>
                 <Text style={styles.link}>Don't have an account? Register</Text>
             </TouchableOpacity>
         </View>
@@ -73,10 +127,32 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30 },
-    input: { width: '100%', height: 50, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 15, marginBottom: 20, fontSize: 16 },
-    button: { width: '100%', height: 50, backgroundColor: '#007AFF', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-    link: { color: '#007AFF', marginTop: 20 }
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    title: { fontSize: 24, fontWeight: "bold", marginBottom: 30 },
+    input: {
+        width: "100%",
+        height: 50,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        marginBottom: 20,
+        fontSize: 16,
+    },
+    button: {
+        width: "100%",
+        height: 50,
+        backgroundColor: "#007AFF",
+        borderRadius: 8,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+    link: { color: "#007AFF", marginTop: 20 },
 });

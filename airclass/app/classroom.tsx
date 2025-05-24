@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 export default function ClassroomEntryScreen() {
@@ -8,26 +16,31 @@ export default function ClassroomEntryScreen() {
     const [userInfo, setUserInfo] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [classCode, setClassCode] = useState("");
+    const [isJoining, setIsJoining] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = await AsyncStorage.getItem('jwtToken');
+            console.log("Classroom: Checking authentication...");
+            const token = await AsyncStorage.getItem("jwtToken");
+            console.log("Classroom: Token exists?", !!token);
             if (!token) {
-                router.replace('/login');
+                console.log("Classroom: No token found, redirecting to login");
+                router.replace("/login");
                 return;
             }
+
+            // Get user info from AsyncStorage instead of API
             try {
-                const response = await fetch('http://localhost:5000/api/auth/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) {
-                    router.replace('/login');
-                    return;
+                const userEmail = await AsyncStorage.getItem("userEmail");
+                const userName = await AsyncStorage.getItem("userName");
+                if (userEmail && userName) {
+                    setUserInfo({ email: userEmail, name: userName });
                 }
-                const data = await response.json();
-                setUserInfo(data.user);
             } catch (err) {
-                router.replace('/login');
+                console.error(
+                    "Classroom: Error getting user info from storage:",
+                    err
+                );
             } finally {
                 setIsLoading(false);
             }
@@ -35,9 +48,77 @@ export default function ClassroomEntryScreen() {
         checkAuth();
     }, []);
 
-    const handleEnterClass = () => {
-        if (classCode.trim()) {
-            router.push({ pathname: "/classroom-interface", params: { code: classCode.trim() } });
+    const handleEnterClass = async () => {
+        if (!classCode.trim()) return;
+
+        setIsJoining(true);
+        try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            console.log("Verifying classroom code:", classCode.trim());
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/classroom/join",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ code: classCode.trim() }),
+                }
+            );
+
+            const data = await response.json();
+            console.log("Classroom join response:", data);
+
+            if (response.ok && data.success) {
+                console.log("Classroom code valid, joining classroom...");
+                try {
+                    await AsyncStorage.setItem(
+                        "currentClassroomCode",
+                        classCode.trim()
+                    );
+                    console.log("Classroom code stored in AsyncStorage");
+                    console.log("Navigating to classroom interface...");
+                    router.replace({
+                        pathname: "/classroom-interface",
+                        params: {
+                            code: classCode.trim(),
+                            timestamp: new Date().getTime(),
+                        },
+                    });
+                } catch (storageError) {
+                    console.error(
+                        "Error storing classroom code:",
+                        storageError
+                    );
+                    Alert.alert(
+                        "Warning",
+                        "Classroom joined but failed to save code locally"
+                    );
+                    // Still proceed with navigation even if storage fails
+                    console.log(
+                        "Navigating to classroom interface (after storage error)..."
+                    );
+                    router.replace({
+                        pathname: "/classroom-interface",
+                        params: {
+                            code: classCode.trim(),
+                            timestamp: new Date().getTime(),
+                        },
+                    });
+                }
+            } else {
+                Alert.alert(
+                    "Invalid Code",
+                    data.message ||
+                        "This classroom code is invalid or the classroom is not open"
+                );
+            }
+        } catch (err) {
+            console.error("Error joining classroom:", err);
+            Alert.alert("Error", "Failed to join classroom. Please try again.");
+        } finally {
+            setIsJoining(false);
         }
     };
 
@@ -52,7 +133,9 @@ export default function ClassroomEntryScreen() {
     return (
         <View style={styles.container}>
             {userInfo && (
-                <Text style={styles.welcomeText}>Welcome, {userInfo.name}!</Text>
+                <Text style={styles.welcomeText}>
+                    Welcome, {userInfo.name}!
+                </Text>
             )}
             <View style={styles.inputContainer}>
                 <Text style={styles.label}>Enter Class Code:</Text>
@@ -63,22 +146,22 @@ export default function ClassroomEntryScreen() {
                     placeholder="Enter your class code"
                     placeholderTextColor="#999"
                 />
-                <TouchableOpacity 
-                    style={[styles.button, !classCode.trim() && styles.buttonDisabled]}
+                <TouchableOpacity
+                    style={[
+                        styles.button,
+                        (!classCode.trim() || isJoining) &&
+                            styles.buttonDisabled,
+                    ]}
                     onPress={handleEnterClass}
-                    disabled={!classCode.trim()}
+                    disabled={!classCode.trim() || isJoining}
                 >
-                    <Text style={styles.buttonText}>Enter Class</Text>
+                    {isJoining ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.buttonText}>Enter Class</Text>
+                    )}
                 </TouchableOpacity>
             </View>
-            {/* Debug Info Section */}
-            {userInfo && (
-                <View style={styles.debugBox}>
-                    <Text style={styles.debugTitle}>[DEBUG] User Info from JWT:</Text>
-                    <Text selectable style={styles.debugText}>Name: {userInfo.name}</Text>
-                    <Text selectable style={styles.debugText}>Email: {userInfo.email}</Text>
-                </View>
-            )}
         </View>
     );
 }
@@ -130,24 +213,5 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 18,
         fontWeight: "bold",
-    },
-    debugBox: {
-        marginTop: 40,
-        padding: 12,
-        backgroundColor: '#f5f5f5',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        width: '100%',
-        maxWidth: 400,
-    },
-    debugTitle: {
-        fontWeight: 'bold',
-        color: '#d97706',
-        marginBottom: 4,
-    },
-    debugText: {
-        fontSize: 14,
-        color: '#334155',
     },
 });
