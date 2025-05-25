@@ -70,13 +70,10 @@ export default function ClassroomEntryScreen() {
             const data = await response.json();
             console.log("Classroom join response:", data);
 
-            if (response.ok && data.success) {
+            if (response.ok && data.status) {
                 console.log("Classroom code valid, joining classroom...");
                 try {
-                    await AsyncStorage.setItem(
-                        "currentClassroomCode",
-                        classCode.trim()
-                    );
+                    await AsyncStorage.setItem("code", classCode.trim());
                     console.log("Classroom code stored in AsyncStorage");
                     console.log("Navigating to classroom interface...");
                     router.replace({
