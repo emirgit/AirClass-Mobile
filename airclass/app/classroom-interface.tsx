@@ -8,6 +8,7 @@ import {
     Platform,
     Dimensions,
     Alert,
+    AppState,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -33,6 +34,59 @@ export default function ClassroomInterfaceScreen() {
     // Responsive logic
     const window = Dimensions.get("window");
     const isMobile = window.width < 700;
+
+    // Add leave classroom function
+    const leaveClassroom = async () => {
+        try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            if (!token) return;
+
+            // Call the leave endpoint
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/classroom/leave",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await response.json();
+            console.log("Leave classroom response:", data);
+
+            // Clear classroom data from storage regardless of API response
+            await AsyncStorage.removeItem("code");
+            await AsyncStorage.removeItem("classroomId");
+        } catch (error) {
+            console.error("Error leaving classroom:", error);
+            // Still try to clear storage even if API call fails
+            try {
+                await AsyncStorage.removeItem("code");
+                await AsyncStorage.removeItem("classroomId");
+            } catch (storageError) {
+                console.error("Error clearing classroom data:", storageError);
+            }
+        }
+    };
+
+    // Handle app state changes - only when app is closed
+    useEffect(() => {
+        const subscription = AppState.addEventListener(
+            "change",
+            (nextAppState) => {
+                if (nextAppState === "background") {
+                    // Only leave when app goes to background (closed)
+                    leaveClassroom();
+                }
+            }
+        );
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
 
     useEffect(() => {
         const getUserInfoFromStorage = async () => {
