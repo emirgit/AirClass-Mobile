@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    ActivityIndicator,
+    Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 export default function ClassroomEntryScreen() {
@@ -11,23 +19,26 @@ export default function ClassroomEntryScreen() {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = await AsyncStorage.getItem('jwtToken');
+            const token = await AsyncStorage.getItem("jwtToken");
             if (!token) {
-                router.replace('/login');
+                router.replace("/login");
                 return;
             }
             try {
-                const response = await fetch('http://localhost:5000/api/auth/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetch(
+                    "http://localhost:5000/api/auth/me",
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
                 if (!response.ok) {
-                    router.replace('/login');
+                    router.replace("/login");
                     return;
                 }
                 const data = await response.json();
                 setUserInfo(data.user);
             } catch (err) {
-                router.replace('/login');
+                router.replace("/login");
             } finally {
                 setIsLoading(false);
             }
@@ -37,7 +48,10 @@ export default function ClassroomEntryScreen() {
 
     const handleEnterClass = () => {
         if (classCode.trim()) {
-            router.push({ pathname: "/classroom-interface", params: { code: classCode.trim() } });
+            router.push({
+                pathname: "/classroom-interface",
+                params: { code: classCode.trim() },
+            });
         }
     };
 
@@ -52,7 +66,9 @@ export default function ClassroomEntryScreen() {
     return (
         <View style={styles.container}>
             {userInfo && (
-                <Text style={styles.welcomeText}>Welcome, {userInfo.name}!</Text>
+                <Text style={styles.welcomeText}>
+                    Welcome, {userInfo.name}!
+                </Text>
             )}
             <View style={styles.inputContainer}>
                 <Text style={styles.label}>Enter Class Code:</Text>
@@ -63,8 +79,11 @@ export default function ClassroomEntryScreen() {
                     placeholder="Enter your class code"
                     placeholderTextColor="#999"
                 />
-                <TouchableOpacity 
-                    style={[styles.button, !classCode.trim() && styles.buttonDisabled]}
+                <TouchableOpacity
+                    style={[
+                        styles.button,
+                        !classCode.trim() && styles.buttonDisabled,
+                    ]}
                     onPress={handleEnterClass}
                     disabled={!classCode.trim()}
                 >
@@ -74,9 +93,15 @@ export default function ClassroomEntryScreen() {
             {/* Debug Info Section */}
             {userInfo && (
                 <View style={styles.debugBox}>
-                    <Text style={styles.debugTitle}>[DEBUG] User Info from JWT:</Text>
-                    <Text selectable style={styles.debugText}>Name: {userInfo.name}</Text>
-                    <Text selectable style={styles.debugText}>Email: {userInfo.email}</Text>
+                    <Text style={styles.debugTitle}>
+                        [DEBUG] User Info from JWT:
+                    </Text>
+                    <Text selectable style={styles.debugText}>
+                        Name: {userInfo.name}
+                    </Text>
+                    <Text selectable style={styles.debugText}>
+                        Email: {userInfo.email}
+                    </Text>
                 </View>
             )}
         </View>
@@ -134,20 +159,20 @@ const styles = StyleSheet.create({
     debugBox: {
         marginTop: 40,
         padding: 12,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: "#f5f5f5",
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#ddd',
-        width: '100%',
+        borderColor: "#ddd",
+        width: "100%",
         maxWidth: 400,
     },
     debugTitle: {
-        fontWeight: 'bold',
-        color: '#d97706',
+        fontWeight: "bold",
+        color: "#d97706",
         marginBottom: 4,
     },
     debugText: {
         fontSize: 14,
-        color: '#334155',
+        color: "#334155",
     },
 });
