@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useWebSocket } from "../hooks/useWebSocket";
+import { View, TouchableOpacity, Text, StyleSheet, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MarkAttendance } from "./MarkAttendance";
+import { SlideControl } from "./SlideControl";
 
 interface RequestToSpeakProps {
     studentId: string;
@@ -10,6 +11,7 @@ interface RequestToSpeakProps {
 
 // Mock data for request status
 interface RequestStatus {
+    id?: string;
     status: "pending" | "accepted" | "rejected";
     timestamp: string;
     position?: number;
@@ -24,25 +26,247 @@ export function RequestToSpeak({
     const [requestStatus, setRequestStatus] = useState<RequestStatus | null>(
         null
     );
-    const { sendMessage } = useWebSocket();
+    const [isLoading, setIsLoading] = useState(false);
+    const [classroomId, setClassroomId] = useState<string | null>(null);
 
-    // Simulate request status updates
     useEffect(() => {
-        if (isRequestSent && !requestStatus) {
-            setRequestStatus({
-                status: "accepted",
-                timestamp: new Date().toISOString(),
-            });
-            onRequestAccepted();
-        }
-    }, [isRequestSent, requestStatus, onRequestAccepted]);
+        const getClassroomId = async () => {
+            try {
+                const id = await AsyncStorage.getItem("classroomId");
+                setClassroomId(id);
+            } catch (error) {
+                console.error("Error getting classroom ID:", error);
+            }
+        };
+        getClassroomId();
+    }, []);
 
-    const handleRequest = () => {
-        sendMessage({
-            type: "speakRequest",
-            studentId,
-        });
-        setIsRequestSent(true);
+    // Add new useEffect to check request status on mount
+    useEffect(() => {
+        const checkInitialRequestStatus = async () => {
+            if (!classroomId) return;
+
+            try {
+                const token = await AsyncStorage.getItem("jwtToken");
+                if (!token) return;
+
+                console.log(
+                    "Checking initial request status for classroom:",
+                    classroomId
+                );
+                const response = await fetch(
+                    `http://159.89.19.111/airclass-api/request/check?classroom_id=${classroomId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const data = await response.json();
+                console.log("Initial request check response:", data);
+
+                if (response.ok && data.status === true) {
+                    if (data.data.hasActiveRequest === true) {
+                        console.log(
+                            "Found active request, showing SlideControl"
+                        );
+                        setIsRequestSent(true);
+                        setRequestStatus({
+                            id: data.data.request_id?.toString() || undefined,
+                            status: "accepted",
+                            timestamp: new Date().toISOString(),
+                        });
+                        onRequestAccepted();
+                    } else {
+                        console.log("Found pending request");
+                        setIsRequestSent(true);
+                        setRequestStatus({
+                            id: data.data.request_id?.toString() || undefined,
+                            status: "pending",
+                            timestamp: new Date().toISOString(),
+                        });
+                    }
+                } else {
+                    console.log("No active request found");
+                    setIsRequestSent(false);
+                    setRequestStatus(null);
+                }
+            } catch (error) {
+                console.error("Error checking initial request status:", error);
+                setIsRequestSent(false);
+                setRequestStatus(null);
+            }
+        };
+
+        checkInitialRequestStatus();
+    }, [classroomId, onRequestAccepted]);
+
+    const handleRequest = async () => {
+        if (!classroomId) {
+            Alert.alert("Error", "No classroom selected");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            if (!token) {
+                Alert.alert("Error", "Please log in to request to speak");
+                return;
+            }
+
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/request",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        classroom_id: classroomId,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+            console.log("Create request response:", data);
+            if (response.ok && data.data?.request_id) {
+                setIsRequestSent(true);
+                setRequestStatus({
+                    id: data.data.request_id.toString(),
+                    status: "pending",
+                    timestamp: new Date().toISOString(),
+                });
+            } else {
+                Alert.alert("Error", data.message || "Failed to send request");
+            }
+        } catch (error) {
+            console.error("Error sending request:", error);
+            Alert.alert("Error", "Network error. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCheckRequest = async () => {
+        if (!classroomId) {
+            Alert.alert("Error", "No classroom selected");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            if (!token) {
+                Alert.alert("Error", "Please log in to check request status");
+                return;
+            }
+
+            console.log("Checking request status for classroom:", classroomId);
+            const response = await fetch(
+                `http://159.89.19.111/airclass-api/request/check?classroom_id=${classroomId}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const data = await response.json();
+            console.log("Request check response:", data);
+
+            if (response.ok) {
+                if (
+                    data.status === true &&
+                    data.data.hasActiveRequest === true
+                ) {
+                    console.log("Request is accepted, showing SlideControl");
+                    setRequestStatus({
+                        id: data.data.request_id?.toString() || undefined,
+                        status: "accepted",
+                        timestamp: new Date().toISOString(),
+                    });
+                    onRequestAccepted();
+                } else if (
+                    data.status === true &&
+                    data.data.hasActiveRequest === false
+                ) {
+                    console.log("Request is pending");
+                    setRequestStatus({
+                        id: data.data.request_id?.toString() || undefined,
+                        status: "pending",
+                        timestamp: new Date().toISOString(),
+                    });
+                } else {
+                    console.log("Request is rejected");
+                    setRequestStatus({
+                        id: data.data.request_id?.toString() || undefined,
+                        status: "rejected",
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+            } else {
+                console.log("Request check failed:", data.message);
+                Alert.alert(
+                    "Error",
+                    data.message || "Failed to check request status"
+                );
+            }
+        } catch (error) {
+            console.error("Error checking request:", error);
+            Alert.alert("Error", "Network error. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCancelRequest = async () => {
+        if (!requestStatus?.id) {
+            Alert.alert("Error", "No request ID found");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            if (!token) {
+                Alert.alert("Error", "Please log in to cancel request");
+                return;
+            }
+
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/request",
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ id: requestStatus.id }),
+                }
+            );
+
+            const data = await response.json();
+            console.log("Cancel request response:", data);
+            if (response.ok) {
+                setIsRequestSent(false);
+                setRequestStatus(null);
+            } else {
+                Alert.alert(
+                    "Error",
+                    data.message || "Failed to cancel request"
+                );
+            }
+        } catch (error) {
+            console.error("Error canceling request:", error);
+            Alert.alert("Error", "Network error. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -50,31 +274,57 @@ export function RequestToSpeak({
             {!isRequestSent ? (
                 <>
                     <TouchableOpacity
-                        style={styles.button}
+                        style={[
+                            styles.button,
+                            isLoading && styles.buttonDisabled,
+                        ]}
                         onPress={handleRequest}
+                        disabled={isLoading}
                     >
-                        <Text style={styles.buttonText}>Request to Speak</Text>
+                        <Text style={styles.buttonText}>
+                            {isLoading ? "Sending..." : "Request to Speak"}
+                        </Text>
                     </TouchableOpacity>
                     <MarkAttendance />
                 </>
+            ) : requestStatus?.status === "accepted" ? (
+                <SlideControl />
             ) : (
                 <View style={styles.feedbackContainer}>
-                    {requestStatus?.status === "pending" ? (
-                        <>
-                            <Text style={styles.feedbackText}>
-                                Request Pending
+                    <Text style={styles.feedbackText}>
+                        {requestStatus?.status === "pending"
+                            ? "Request Pending"
+                            : "Request Status"}
+                    </Text>
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity
+                            style={[
+                                styles.secondaryButton,
+                                isLoading && styles.buttonDisabled,
+                            ]}
+                            onPress={handleCheckRequest}
+                            disabled={isLoading}
+                        >
+                            <Text style={styles.secondaryButtonText}>
+                                {isLoading ? "Checking..." : "Check Request"}
                             </Text>
-                            <Text style={styles.statusText}>
-                                Position in queue: {requestStatus.position}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.dangerButton,
+                                isLoading && styles.buttonDisabled,
+                            ]}
+                            onPress={handleCancelRequest}
+                            disabled={isLoading}
+                        >
+                            <Text style={styles.dangerButtonText}>
+                                {isLoading ? "Canceling..." : "Cancel Request"}
                             </Text>
-                            <Text style={styles.statusText}>
-                                Estimated wait time:{" "}
-                                {requestStatus.estimatedWaitTime}
-                            </Text>
-                        </>
-                    ) : (
-                        <Text style={styles.feedbackText}>
-                            Request Accepted
+                        </TouchableOpacity>
+                    </View>
+                    {requestStatus?.status === "pending" && (
+                        <Text style={styles.statusText}>
+                            Waiting for instructor's approval...
                         </Text>
                     )}
                 </View>
@@ -95,6 +345,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: "center",
     },
+    buttonDisabled: {
+        opacity: 0.7,
+    },
     buttonText: {
         color: "#fff",
         fontSize: 16,
@@ -105,7 +358,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 8,
         alignItems: "center",
-        gap: 8,
+        gap: 12,
     },
     feedbackText: {
         color: "#1E40AF",
@@ -115,5 +368,40 @@ const styles = StyleSheet.create({
     statusText: {
         color: "#3B82F6",
         fontSize: 14,
+    },
+    buttonRow: {
+        flexDirection: "row",
+        gap: 8,
+        width: "100%",
+    },
+    secondaryButton: {
+        flex: 1,
+        backgroundColor: "#EFF6FF",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#2563EB",
+    },
+    secondaryButtonText: {
+        color: "#2563EB",
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    dangerButton: {
+        flex: 1,
+        backgroundColor: "#FEE2E2",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#DC2626",
+    },
+    dangerButtonText: {
+        color: "#DC2626",
+        fontSize: 14,
+        fontWeight: "600",
     },
 });
