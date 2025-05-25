@@ -16,9 +16,9 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { RequestToSpeak } from "../components/RequestToSpeak";
 import { Ionicons } from '@expo/vector-icons';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { RequestToSpeak } from "../components/RequestToSpeak";
 
 // Theme type definition
 type Theme = {
@@ -249,7 +249,8 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
     slideBoxExpanded: {
         flex: 1,
         justifyContent: 'center',
-        padding: 32,
+        alignItems: 'center',
+        padding: Math.max(16, Dimensions.get('window').width * 0.02),
         maxWidth: '100%',
     },
     slideBoxLandscape: {
@@ -273,8 +274,9 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         textAlign: 'center',
     },
     slideTitleExpanded: {
-        fontSize: 32,
-        marginBottom: 24,
+        fontSize: Math.max(24, Dimensions.get('window').width * 0.03),
+        marginBottom: Math.max(16, Dimensions.get('window').width * 0.02),
+        textAlign: 'center',
     },
     slideTitleLandscape: {
         fontSize: 22,
@@ -287,8 +289,10 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         textAlign: 'center',
     },
     slideContentExpanded: {
-        fontSize: 20,
-        lineHeight: 32,
+        fontSize: Math.max(16, Dimensions.get('window').width * 0.02),
+        lineHeight: Math.max(24, Dimensions.get('window').width * 0.03),
+        textAlign: 'center',
+        maxWidth: 800,
     },
     slideContentLandscape: {
         fontSize: 16,
@@ -303,7 +307,12 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         marginTop: 20,
     },
     slideNavContainerExpanded: {
-        paddingHorizontal: 24,
+        paddingHorizontal: Math.max(16, Dimensions.get('window').width * 0.02),
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: Math.max(48, Dimensions.get('window').width * 0.06),
+        position: 'relative',
+        bottom: -40,
     },
     slideNavContainerLandscape: {
         marginTop: 16,
@@ -311,13 +320,14 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
     },
     navButton: {
         backgroundColor: COLORS.primary,
-        padding: 10,
+        padding: Math.max(6, Dimensions.get('window').width * 0.01),
         borderRadius: 8,
         opacity: 0.9,
-        width: 44,
-        height: 44,
+        width: Math.max(32, Dimensions.get('window').width * 0.04),
+        height: Math.max(32, Dimensions.get('window').width * 0.04),
         alignItems: 'center',
         justifyContent: 'center',
+        marginHorizontal: Math.max(8, Dimensions.get('window').width * 0.01),
     },
     navButtonDisabled: {
         backgroundColor: COLORS.border,
@@ -325,27 +335,24 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
     },
     slideIndicator: {
         backgroundColor: COLORS.white,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
+        paddingHorizontal: Math.max(10, Dimensions.get('window').width * 0.015),
+        paddingVertical: Math.max(4, Dimensions.get('window').width * 0.005),
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: COLORS.border,
+        minWidth: Math.max(60, Dimensions.get('window').width * 0.08),
+        alignItems: 'center',
     },
     slideIndicatorText: {
-        fontSize: 14,
+        fontSize: Math.max(12, Dimensions.get('window').width * 0.015),
         fontWeight: '600',
         color: COLORS.slideIndicatorText,
+        textAlign: 'center',
     },
     sideSection: {
         flex: 1,
-        backgroundColor: COLORS.surface,
-        borderRadius: 16,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
+        backgroundColor: 'transparent',
+        padding: 0,
         alignItems: 'center',
         justifyContent: 'center',
         maxWidth: 400,
@@ -588,6 +595,74 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         fontSize: 12,
         color: COLORS.textLight,
     },
+    pendingRequestOverlay: {
+        position: 'absolute',
+        bottom: Platform.OS === 'ios' ? 180 : 168,
+        left: '50%',
+        transform: [{ translateX: -175 }],
+        backgroundColor: "#7C3AED",
+        padding: 20,
+        zIndex: 1000,
+        width: 350,
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+        marginHorizontal: 20,
+    },
+    pendingRequestContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    pendingRequestText: {
+        color: COLORS.white,
+        fontSize: 18,
+        fontWeight: '600',
+        textAlign: 'center',
+        width: '100%',
+        marginBottom: 4,
+    },
+    pendingRequestSubtext: {
+        color: COLORS.white,
+        fontSize: 15,
+        opacity: 0.9,
+        marginTop: 4,
+        marginBottom: 16,
+        textAlign: 'center',
+        width: '100%',
+        lineHeight: 20,
+    },
+    pendingRequestButtons: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 8,
+        width: '100%',
+        justifyContent: 'center',
+    },
+    pendingRequestButton: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        maxWidth: 160,
+    },
+    pendingRequestButtonDanger: {
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+    },
+    pendingRequestButtonText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: '500',
+    },
 });
 
 export default function ClassroomInterfaceScreen() {
@@ -607,13 +682,20 @@ export default function ClassroomInterfaceScreen() {
     const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
     const [isParticipantsOpen, setIsParticipantsOpen] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [requestStatus, setRequestStatus] = useState<any>(null);
     const COLORS = isDarkMode ? DARK_THEME : LIGHT_THEME;
     const styles = createStyles(COLORS);
+    const requestToSpeakRef = React.useRef<any>(null);
 
     // Handle orientation changes
     useEffect(() => {
         const subscription = Dimensions.addEventListener('change', ({ window }) => {
             setDimensions(window);
+            if (window.width > window.height) {
+                setIsExpanded(true);
+            } else {
+                setIsExpanded(false);
+            }
         });
 
         return () => subscription?.remove();
@@ -919,6 +1001,33 @@ export default function ClassroomInterfaceScreen() {
         </View>
     );
 
+    const renderPendingRequestOverlay = (requestStatus: any) => {
+        if (!requestStatus || requestStatus.status !== "pending") return null;
+        
+        return (
+            <View style={styles.pendingRequestOverlay}>
+                <View style={styles.pendingRequestContainer}>
+                    <Text style={styles.pendingRequestText}>Request Pending</Text>
+                    <Text style={styles.pendingRequestSubtext}>Waiting for instructor's approval...</Text>
+                    <View style={styles.pendingRequestButtons}>
+                        <TouchableOpacity
+                            style={styles.pendingRequestButton}
+                            onPress={() => requestToSpeakRef.current?.handleCheckRequest()}
+                        >
+                            <Text style={styles.pendingRequestButtonText}>Check Request</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.pendingRequestButton, styles.pendingRequestButtonDanger]}
+                            onPress={() => requestToSpeakRef.current?.handleCancelRequest()}
+                        >
+                            <Text style={styles.pendingRequestButtonText}>Cancel Request</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        );
+    };
+
     if (isLoading) {
         return (
             <View style={styles.container}>
@@ -935,6 +1044,7 @@ export default function ClassroomInterfaceScreen() {
                 isExpanded && styles.containerExpanded
             ]}>
                 {renderHeader()}
+                {renderPendingRequestOverlay(requestStatus)}
 
                 {/* Main Content Section */}
                 <View style={[
@@ -957,21 +1067,6 @@ export default function ClassroomInterfaceScreen() {
                                     isExpanded && styles.slideBoxExpanded,
                                     isLandscape && !isExpanded && styles.slideBoxLandscape
                                 ]}>
-                                    {isExpanded && (
-                                        <View style={styles.expandedHeader}>
-                                            <TouchableOpacity
-                                                style={styles.expandButton}
-                                                onPress={handleExpand}
-                                                activeOpacity={0.7}
-                                            >
-                                                <Ionicons 
-                                                    name="contract" 
-                                                    size={24} 
-                                                    color={COLORS.white} 
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                    )}
                                     <Text style={[
                                         styles.slideTitle,
                                         isExpanded && styles.slideTitleExpanded,

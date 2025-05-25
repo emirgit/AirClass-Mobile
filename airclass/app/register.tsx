@@ -99,12 +99,14 @@ export default function RegisterScreen() {
             <TextInput
                 style={styles.input}
                 placeholder="Name"
+                placeholderTextColor="#666"
                 value={name}
                 onChangeText={setName}
             />
             <TextInput
                 style={styles.input}
                 placeholder="Email"
+                placeholderTextColor="#666"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -113,6 +115,7 @@ export default function RegisterScreen() {
             <TextInput
                 style={styles.input}
                 placeholder="Password"
+                placeholderTextColor="#666"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -146,15 +149,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginBottom: 20,
         fontSize: 16,
+        color: "#000",
     },
     button: {
         width: "100%",
         height: 50,
-        backgroundColor: "#007AFF",
+        backgroundColor: "#4F46E5",
         borderRadius: 8,
         justifyContent: "center",
         alignItems: "center",
     },
     buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-    link: { color: "#007AFF", marginTop: 20 },
+    link: { color: "#4F46E5", marginTop: 20 },
 });

@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     button: {
-        backgroundColor: "#2563EB",
+        backgroundColor: "#4F46E5",
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
@@ -357,19 +357,19 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     feedbackContainer: {
-        backgroundColor: "#EFF6FF",
+        backgroundColor: "#EEF2FF",
         padding: 16,
         borderRadius: 8,
         alignItems: "center",
         gap: 12,
     },
     feedbackText: {
-        color: "#1E40AF",
+        color: "#4F46E5",
         fontSize: 16,
         fontWeight: "500",
     },
     statusText: {
-        color: "#3B82F6",
+        color: "#818CF8",
         fontSize: 14,
     },
     buttonRow: {
@@ -379,16 +379,16 @@ const styles = StyleSheet.create({
     },
     secondaryButton: {
         flex: 1,
-        backgroundColor: "#EFF6FF",
+        backgroundColor: "#EEF2FF",
         paddingVertical: 12,
         paddingHorizontal: 16,
         borderRadius: 8,
         alignItems: "center",
         borderWidth: 1,
-        borderColor: "#2563EB",
+        borderColor: "#4F46E5",
     },
     secondaryButtonText: {
-        color: "#2563EB",
+        color: "#4F46E5",
         fontSize: 14,
         fontWeight: "600",
     },

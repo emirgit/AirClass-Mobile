@@ -335,16 +335,20 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
+        gap: 8,
     },
     button: {
-        backgroundColor: "#2563EB",
+        backgroundColor: "#4F46E5",
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
         alignItems: "center",
     },
     attendanceButton: {
-        backgroundColor: "#059669",
+        backgroundColor: "#7C3AED",
+    },
+    buttonDisabled: {
+        opacity: 0.7,
     },
     buttonText: {
         color: "#fff",
@@ -426,7 +430,7 @@ const styles = StyleSheet.create({
         width: 70,
         height: 70,
         borderRadius: 35,
-        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        backgroundColor: "rgba(79, 70, 229, 0.3)",
         justifyContent: "center",
         alignItems: "center",
     },
@@ -451,7 +455,7 @@ const styles = StyleSheet.create({
         gap: 20,
     },
     retakeButton: {
-        backgroundColor: "#EF4444",
+        backgroundColor: "#4F46E5",
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 8,
@@ -460,8 +464,5 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: "600",
-    },
-    buttonDisabled: {
-        opacity: 0.5,
     },
 });
