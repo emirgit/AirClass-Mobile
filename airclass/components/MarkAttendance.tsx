@@ -20,73 +20,21 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [cameraStep, setCameraStep] = useState<"selfie" | "qr">("selfie");
+    const [step, setStep] = useState<"qr" | "selfie">("qr");
     const lastScannedCode = useRef<string | null>(null);
     const cameraRef = useRef<CameraView>(null);
     const router = useRouter();
-
-    const takeSelfie = async () => {
-        if (!cameraRef.current) return;
-
-        setIsLoading(true);
-        try {
-            const photo = await cameraRef.current.takePictureAsync({
-                quality: 0.7,
-                base64: true,
-                exif: false,
-            });
-
-            const token = await AsyncStorage.getItem("jwtToken");
-            if (!token) {
-                Alert.alert("Error", "Please log in to mark attendance");
-                router.replace("/login");
-                return;
-            }
-
-            // Create form data for the image
-            const formData = new FormData();
-            formData.append("selfie", {
-                uri: photo.uri,
-                type: "image/jpeg",
-                name: "selfie.jpg",
-            } as any);
-
-            const response = await fetch(
-                "http://159.89.19.111/airclass-api/upload-selfie",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: formData,
-                }
-            );
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Move to QR scanning step
-                setCameraStep("qr");
-            } else {
-                Alert.alert("Error", data.message || "Failed to upload selfie");
-            }
-        } catch (error) {
-            console.error("Error taking/uploading selfie:", error);
-            Alert.alert("Error", "Failed to take or upload selfie");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const [attendanceData, setAttendanceData] = useState<{
+        token: string;
+        classroomId: string;
+    } | null>(null);
 
     const handleBarcodeScanned = async ({ data }: { data: string }) => {
         if (lastScannedCode.current === data || isLoading) {
             return;
         }
-
         lastScannedCode.current = data;
         setIsLoading(true);
-
         try {
             const token = await AsyncStorage.getItem("jwtToken");
             if (!token) {
@@ -94,14 +42,12 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                 router.replace("/login");
                 return;
             }
-
             const classroomId = await AsyncStorage.getItem("classroomId");
             if (!classroomId) {
                 Alert.alert("Error", "No classroom selected");
                 router.back();
                 return;
             }
-
             const response = await fetch(
                 "http://159.89.19.111/airclass-api/attendance",
                 {
@@ -116,13 +62,11 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                     }),
                 }
             );
-
             const responseData = await response.json();
-
             if (response.status === 201) {
-                Alert.alert("Success", "Attendance marked successfully");
-                setIsCameraOpen(false);
-                onAttendanceMarked?.();
+                // Attendance marked, now prompt for selfie
+                setAttendanceData({ token, classroomId });
+                setStep("selfie");
             } else if (response.status === 400) {
                 Alert.alert(
                     "Invalid Code",
@@ -144,6 +88,65 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
         } catch (error) {
             console.error("Error marking attendance:", error);
             Alert.alert("Error", "Network error. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const takeSelfie = async () => {
+        if (!cameraRef.current || !attendanceData) return;
+        setIsLoading(true);
+        try {
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 0.7,
+                base64: true,
+                exif: false,
+            });
+            // Create form data for the image
+            const formData = new FormData();
+            formData.append("image", {
+                uri: photo.uri,
+                type: "image/jpeg",
+                name: "selfie.jpg",
+            } as any);
+            formData.append("classroom_id", attendanceData.classroomId || "");
+            const response = await fetch(
+                "http://159.89.19.111/airclass-api/image",
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${attendanceData.token}`,
+                    },
+                    body: formData,
+                }
+            );
+            const text = await response.text();
+            console.log("Upload response text:", text);
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                Alert.alert(
+                    "Error",
+                    "Server did not return valid JSON. See console for details."
+                );
+                return;
+            }
+            if (response.ok && data.status) {
+                Alert.alert(
+                    "Success",
+                    "Attendance and selfie uploaded successfully"
+                );
+                setIsCameraOpen(false);
+                setStep("qr");
+                setAttendanceData(null);
+                onAttendanceMarked?.();
+            } else {
+                Alert.alert("Error", data.message || "Failed to upload selfie");
+            }
+        } catch (error) {
+            console.error("Error taking/uploading selfie:", error);
+            Alert.alert("Error", "Failed to take or upload selfie");
         } finally {
             setIsLoading(false);
         }
@@ -175,7 +178,7 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                     text: "Continue",
                     onPress: () => {
                         lastScannedCode.current = null;
-                        setCameraStep("selfie");
+                        setStep("qr");
                         setIsCameraOpen(true);
                     },
                 },
@@ -200,11 +203,43 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                 onRequestClose={() => {
                     setIsCameraOpen(false);
                     lastScannedCode.current = null;
-                    setCameraStep("selfie");
+                    setStep("qr");
+                    setAttendanceData(null);
                 }}
             >
                 <View style={styles.cameraContainer}>
-                    {cameraStep === "selfie" ? (
+                    {step === "qr" ? (
+                        <>
+                            <View style={styles.cameraWrapper}>
+                                <CameraView
+                                    ref={cameraRef}
+                                    style={StyleSheet.absoluteFill}
+                                    facing="back"
+                                    onBarcodeScanned={handleBarcodeScanned}
+                                    barcodeScannerSettings={{
+                                        barcodeTypes: ["qr"],
+                                    }}
+                                >
+                                    <View style={styles.overlay}>
+                                        <View style={styles.scanArea} />
+                                        {isLoading && (
+                                            <View style={styles.loadingOverlay}>
+                                                <ActivityIndicator
+                                                    size="large"
+                                                    color="#fff"
+                                                />
+                                            </View>
+                                        )}
+                                    </View>
+                                </CameraView>
+                            </View>
+                            <View style={styles.cameraFooter}>
+                                <Text style={styles.footerText}>
+                                    Scan QR Code to Mark Attendance
+                                </Text>
+                            </View>
+                        </>
+                    ) : (
                         <>
                             <View style={styles.cameraWrapper}>
                                 <CameraView
@@ -264,36 +299,6 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                                 </View>
                             </View>
                         </>
-                    ) : (
-                        <>
-                            <View style={styles.cameraWrapper}>
-                                <CameraView
-                                    style={StyleSheet.absoluteFill}
-                                    facing="back"
-                                    onBarcodeScanned={handleBarcodeScanned}
-                                    barcodeScannerSettings={{
-                                        barcodeTypes: ["qr"],
-                                    }}
-                                >
-                                    <View style={styles.overlay}>
-                                        <View style={styles.scanArea} />
-                                        {isLoading && (
-                                            <View style={styles.loadingOverlay}>
-                                                <ActivityIndicator
-                                                    size="large"
-                                                    color="#fff"
-                                                />
-                                            </View>
-                                        )}
-                                    </View>
-                                </CameraView>
-                            </View>
-                            <View style={styles.cameraFooter}>
-                                <Text style={styles.footerText}>
-                                    Scan QR Code to Mark Attendance
-                                </Text>
-                            </View>
-                        </>
                     )}
                     <TouchableOpacity
                         style={styles.closeButton}
@@ -311,7 +316,8 @@ export function MarkAttendance({ onAttendanceMarked }: MarkAttendanceProps) {
                                         onPress: () => {
                                             setIsCameraOpen(false);
                                             lastScannedCode.current = null;
-                                            setCameraStep("selfie");
+                                            setStep("qr");
+                                            setAttendanceData(null);
                                         },
                                     },
                                 ]
