@@ -22,7 +22,6 @@ export default function ClassroomEntryScreen() {
         const checkAuth = async () => {
             console.log("Classroom: Checking authentication...");
             const token = await AsyncStorage.getItem("jwtToken");
-            console.log("Classroom: Token exists?", !!token);
             if (!token) {
                 console.log("Classroom: No token found, redirecting to login");
                 router.replace("/login");
@@ -33,14 +32,41 @@ export default function ClassroomEntryScreen() {
             try {
                 const userEmail = await AsyncStorage.getItem("userEmail");
                 const userName = await AsyncStorage.getItem("userName");
+                
                 if (userEmail && userName) {
                     setUserInfo({ email: userEmail, name: userName });
+                } else {
+                    // Fallback to API if local storage doesn't have the data
+                    try {
+                        const response = await fetch(
+                            "http://localhost:5000/api/auth/me",
+                            {
+                                headers: { Authorization: `Bearer ${token}` },
+                            }
+                        );
+                        if (!response.ok) {
+                            console.log("API auth check failed, redirecting to login");
+                            router.replace("/login");
+                            return;
+                        }
+                        const userData = await response.json();
+                        setUserInfo(userData);
+                        
+                        // Store for future use
+                        await AsyncStorage.setItem("userEmail", userData.email);
+                        await AsyncStorage.setItem("userName", userData.name);
+                    } catch (apiErr) {
+                        console.error("Error fetching user data from API:", apiErr);
+                        router.replace("/login");
+                        return;
+                    }
                 }
             } catch (err) {
                 console.error(
                     "Classroom: Error getting user info from storage:",
                     err
                 );
+                router.replace("/login");
             } finally {
                 setIsLoading(false);
             }
@@ -159,6 +185,20 @@ export default function ClassroomEntryScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+            {/* Debug Info Section - Only visible in development mode */}
+            {userInfo && __DEV__ && (
+                <View style={styles.debugBox}>
+                    <Text style={styles.debugTitle}>
+                        [DEBUG] User Info:
+                    </Text>
+                    <Text selectable style={styles.debugText}>
+                        Name: {userInfo.name}
+                    </Text>
+                    <Text selectable style={styles.debugText}>
+                        Email: {userInfo.email}
+                    </Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -210,5 +250,24 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 18,
         fontWeight: "bold",
+    },
+    debugBox: {
+        marginTop: 40,
+        padding: 12,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        width: "100%",
+        maxWidth: 400,
+    },
+    debugTitle: {
+        fontWeight: "bold",
+        color: "#d97706",
+        marginBottom: 4,
+    },
+    debugText: {
+        fontSize: 14,
+        color: "#334155",
     },
 });
