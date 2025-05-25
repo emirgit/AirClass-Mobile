@@ -8,11 +8,17 @@ import {
     Platform,
     Dimensions,
     Alert,
+<<<<<<< Updated upstream
     AppState,
+=======
+    ScrollView,
+>>>>>>> Stashed changes
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { RequestToSpeak } from "../components/RequestToSpeak";
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { SlideControl } from "../components/SlideControl";
 
 const slidesData = [
     { title: "Welcome", content: "Welcome to the class!" },
@@ -30,10 +36,12 @@ export default function ClassroomInterfaceScreen() {
     const [slideIndex, setSlideIndex] = useState(0);
     const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(false);
+    const scrollViewRef = React.useRef<ScrollView>(null);
 
     // Responsive logic
     const window = Dimensions.get("window");
     const isMobile = window.width < 700;
+    const isLandscape = window.width > window.height;
 
     // Add leave classroom function
     const leaveClassroom = async () => {
@@ -105,12 +113,40 @@ export default function ClassroomInterfaceScreen() {
         getUserInfoFromStorage();
     }, []);
 
+    useEffect(() => {
+        if (isMobile) {
+            if (isExpanded) {
+                // Lock to landscape orientation when expanded
+                ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+            } else {
+                // Allow all orientations when not expanded
+                ScreenOrientation.unlockAsync();
+            }
+        }
+    }, [isExpanded, isMobile]);
+
     const goToPrevSlide = () => {
         setSlideIndex((prev) => Math.max(prev - 1, 0));
+        if (isMobile && scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ x: (slideIndex - 1) * window.width, animated: true });
+        }
     };
+
     const goToNextSlide = () => {
         setSlideIndex((prev) => Math.min(prev + 1, slidesData.length - 1));
+        if (isMobile && scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ x: (slideIndex + 1) * window.width, animated: true });
+        }
     };
+
+    const handleScroll = (event: any) => {
+        const contentOffset = event.nativeEvent.contentOffset.x;
+        const newIndex = Math.round(contentOffset / window.width);
+        if (newIndex !== slideIndex) {
+            setSlideIndex(newIndex);
+        }
+    };
+
     const handleAttendance = () => {
         router.push("/attendance");
     };
@@ -126,107 +162,197 @@ export default function ClassroomInterfaceScreen() {
     return (
         <View style={[styles.containerRow, isMobile && styles.containerCol]}>
             {/* Main Content Section */}
-            <View style={styles.mainContent}>
+            <View style={[styles.mainContent, isMobile && styles.mainContentMobile]}>
                 {/* Slide Section */}
                 <View
                     style={[
                         styles.slideSection,
                         isMobile && styles.slideSectionMobile,
                         isExpanded && styles.slideSectionExpanded,
+                        isMobile && isExpanded && { 
+                            position: 'absolute', 
+                            top: 0, 
+                            left: 0, 
+                            width: '100%', 
+                            height: '100%', 
+                            zIndex: 1000, 
+                            backgroundColor: '#f8fafc'
+                        },
                     ]}
                 >
                     <View style={styles.expandButtonContainer}>
-                        <TouchableOpacity
-                            style={styles.expandButton}
-                            onPress={() => setIsExpanded(!isExpanded)}
-                            activeOpacity={0.7}
-                            hitSlop={{
-                                top: 10,
-                                bottom: 10,
-                                left: 10,
-                                right: 10,
+                        {!isExpanded && (
+                            <TouchableOpacity
+                                style={styles.expandButton}
+                                onPress={() => setIsExpanded(true)}
+                                activeOpacity={0.7}
+                                hitSlop={{
+                                    top: 10,
+                                    bottom: 10,
+                                    left: 10,
+                                    right: 10,
+                                }}
+                            >
+                                <Text style={styles.expandButtonText}>Expand Slide</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                    {/* Slides Section */}
+                    {isMobile && isExpanded ? (
+                        <View
+                            style={{
+                                flex: 1,
+                                width: '100%',
+                                height: '100%',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                backgroundColor: '#f8fafc',
                             }}
                         >
-                            <Text style={styles.expandButtonText}>
-                                {isExpanded
-                                    ? "Exit Fullscreen"
-                                    : "Expand Slide"}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                    <Text
-                        style={[styles.title, isMobile && styles.titleMobile]}
-                    >
-                        Classroom: {code}
-                    </Text>
-                    <Text
-                        style={[
-                            styles.subtitle,
-                            isMobile && styles.subtitleMobile,
-                        ]}
-                    >
-                        Welcome, {userInfo?.name}!
-                    </Text>
-                    <View
-                        style={[
-                            styles.slideBox,
-                            isMobile && styles.slideBoxMobile,
-                            isExpanded && styles.slideBoxExpanded,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.slideTitle,
-                                isMobile && styles.slideTitleMobile,
-                            ]}
-                        >
-                            {slidesData[slideIndex].title}
-                        </Text>
-                        <Text
-                            style={[
-                                styles.slideContent,
-                                isMobile && styles.slideContentMobile,
-                            ]}
-                        >
-                            {slidesData[slideIndex].content}
-                        </Text>
-                    </View>
-                    <View style={styles.slideNavRow}>
-                        <TouchableOpacity
-                            style={[
-                                styles.navButton,
-                                slideIndex === 0 && styles.navButtonDisabled,
-                            ]}
-                            onPress={goToPrevSlide}
-                            disabled={slideIndex === 0}
-                        >
-                            <Text style={styles.navButtonText}>{"<"}</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.slideIndicator}>
-                            {slideIndex + 1} / {slidesData.length}
-                        </Text>
-                        <TouchableOpacity
-                            style={[
-                                styles.navButton,
-                                slideIndex === slidesData.length - 1 &&
-                                    styles.navButtonDisabled,
-                            ]}
-                            onPress={goToNextSlide}
-                            disabled={slideIndex === slidesData.length - 1}
-                        >
-                            <Text style={styles.navButtonText}>{">"}</Text>
-                        </TouchableOpacity>
-                    </View>
+                            {/* Slide Content Container */}
+                            <View
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    position: 'relative',
+                                }}
+                            >
+                                {/* Exit Fullscreen Button */}
+                                <TouchableOpacity
+                                    style={[styles.expandedExitButton]}
+                                    onPress={() => setIsExpanded(false)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.expandButtonText]}>Exit Fullscreen</Text>
+                                </TouchableOpacity>
+                                
+                                {/* Left Navigation Button */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.expandedNavButton,
+                                        styles.expandedLeftNavButton,
+                                        slideIndex === 0 && styles.navButtonDisabled
+                                    ]}
+                                    onPress={goToPrevSlide}
+                                    disabled={slideIndex === 0}
+                                >
+                                    <Text style={styles.expandedNavButtonText}>{'<'}</Text>
+                                </TouchableOpacity>
+                                
+                                <View style={{
+                                    width: '90%',
+                                    height: '85%',
+                                    backgroundColor: '#fff',
+                                    borderRadius: 24,
+                                    padding: 32,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.08,
+                                    shadowRadius: 4,
+                                    elevation: 2,
+                                }}>
+                                    <Text style={{ 
+                                        fontSize: 32,
+                                        fontWeight: 'bold', 
+                                        color: '#1E293B', 
+                                        textAlign: 'center', 
+                                        marginBottom: 20
+                                    }}>
+                                        {slidesData[slideIndex].title}
+                                    </Text>
+                                    <Text style={{ 
+                                        fontSize: 24,
+                                        color: '#334155', 
+                                        textAlign: 'center' 
+                                    }}>
+                                        {slidesData[slideIndex].content}
+                                    </Text>
+                                </View>
+                                
+                                {/* Right Navigation Button */}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.expandedNavButton,
+                                        styles.expandedRightNavButton,
+                                        slideIndex === slidesData.length - 1 && styles.navButtonDisabled
+                                    ]}
+                                    onPress={goToNextSlide}
+                                    disabled={slideIndex === slidesData.length - 1}
+                                >
+                                    <Text style={styles.expandedNavButtonText}>{'>'}</Text>
+                                </TouchableOpacity>
+                                
+                                {/* Slide indicator for expanded mode */}
+                                <View style={styles.expandedSlideIndicatorContainer}>
+                                    <Text style={styles.expandedSlideIndicator}>
+                                        {slideIndex + 1} / {slidesData.length}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    ) : (
+                        // Normal mode content
+                        <View style={styles.slideContainer}>
+                            {/* Left Navigation Button */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.horizontalNavButton,
+                                    styles.leftNavButton,
+                                    slideIndex === 0 && styles.navButtonDisabled
+                                ]}
+                                onPress={goToPrevSlide}
+                                disabled={slideIndex === 0}
+                            >
+                                <Text style={styles.horizontalNavButtonText}>{'<'}</Text>
+                            </TouchableOpacity>
+                            
+                            {/* Slide Content */}
+                            <View
+                                style={[
+                                    styles.slideBox,
+                                    isMobile && styles.slideBoxMobile,
+                                    isExpanded && !isMobile && styles.slideBoxExpanded,
+                                    { alignSelf: 'center' },
+                                ]}
+                            >
+                                <Text style={isMobile ? styles.slideTitleMobile : styles.slideTitle}>
+                                    {slidesData[slideIndex].title}
+                                </Text>
+                                <Text style={isMobile ? styles.slideContentMobile : styles.slideContent}>
+                                    {slidesData[slideIndex].content}
+                                </Text>
+                            </View>
+                            
+                            {/* Right Navigation Button */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.horizontalNavButton,
+                                    styles.rightNavButton,
+                                    slideIndex === slidesData.length - 1 && styles.navButtonDisabled
+                                ]}
+                                onPress={goToNextSlide}
+                                disabled={slideIndex === slidesData.length - 1}
+                            >
+                                <Text style={styles.horizontalNavButtonText}>{'>'}</Text>
+                            </TouchableOpacity>
+                            
+                            {/* Slide indicator below */}
+                            <View style={styles.slideIndicatorContainer}>
+                                <Text style={styles.slideIndicator}>
+                                    {slideIndex + 1} / {slidesData.length}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
                 </View>
 
-                {/* Side Section - Only render when not expanded */}
-                {!isExpanded && (
-                    <View
-                        style={[
-                            styles.sideSection,
-                            isMobile && styles.sideSectionMobile,
-                        ]}
-                    >
+                {/* Side Section - Only render on desktop/tablet and not expanded */}
+                {!isMobile && !isExpanded && (
+                    <View style={styles.sideSection}>
                         <RequestToSpeak
                             studentId={studentId}
                             onRequestAccepted={() => setIsRequestAccepted(true)}
@@ -234,6 +360,28 @@ export default function ClassroomInterfaceScreen() {
                     </View>
                 )}
             </View>
+
+            {/* Bottom Buttons - Only show in portrait mode when not expanded */}
+            {isMobile && !isExpanded && (
+                <View style={styles.bottomButtonsContainer}>
+                    <RequestToSpeak
+                        studentId={studentId}
+                        onRequestAccepted={() => setIsRequestAccepted(true)}
+                    />
+                </View>
+            )}
+
+            {/* Classroom code and welcome text - only show in normal mode */}
+            {!isExpanded && (
+                <>
+                    <Text style={[styles.title, isMobile && styles.titleMobile]}>
+                        Classroom: {code}
+                    </Text>
+                    <Text style={[styles.subtitle, isMobile && styles.subtitleMobile]}>
+                        Welcome, {userInfo?.name}!
+                    </Text>
+                </>
+            )}
         </View>
     );
 }
@@ -257,12 +405,17 @@ const styles = StyleSheet.create({
     containerCol: {
         flexDirection: "column",
         alignItems: "stretch",
-        padding: 10,
+        padding: 16,
     },
     mainContent: {
         flex: 1,
         flexDirection: "row",
         position: "relative",
+    },
+    mainContentMobile: {
+        flex: 1,
+        flexDirection: 'column',
+        paddingBottom: 100, // Space for bottom buttons
     },
     slideSection: {
         flex: 4,
@@ -273,6 +426,7 @@ const styles = StyleSheet.create({
     slideSectionMobile: {
         marginRight: 0,
         marginBottom: 24,
+        paddingTop: 8,
     },
     slideSectionExpanded: {
         flex: 1,
@@ -292,6 +446,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginBottom: 0,
+        paddingHorizontal: 16,
     },
     title: {
         fontSize: 24,
@@ -301,7 +456,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     titleMobile: {
-        fontSize: 20,
+        fontSize: 22,
+        marginBottom: 4,
     },
     subtitle: {
         fontSize: 16,
@@ -310,8 +466,18 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     subtitleMobile: {
-        fontSize: 14,
-        marginBottom: 16,
+        fontSize: 15,
+        marginBottom: 20,
+        color: "#475569",
+    },
+    slidesScrollView: {
+        flex: 1,
+        width: "100%",
+        marginTop: 8,
+    },
+    slidesScrollViewExpanded: {
+        marginTop: 0,
+        height: "100%",
     },
     slideBox: {
         width: 500,
@@ -329,14 +495,35 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     slideBoxMobile: {
-        width: "100%",
-        minHeight: 180,
-        padding: 18,
+        minHeight: 200,
+        padding: 24,
+        marginHorizontal: 16,
+        backgroundColor: "#ffffff",
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+        borderWidth: 1,
+        borderColor: "#E2E8F0",
     },
     slideBoxExpanded: {
         width: "100%",
         minHeight: Dimensions.get("window").height * 0.6,
         padding: 24,
+    },
+    slideBoxExpandedMobile: {
+        minHeight: Dimensions.get("window").height * 0.8,
+        marginHorizontal: 16,
+        padding: 32,
+        backgroundColor: "#ffffff",
+        borderRadius: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 8,
     },
     slideTitle: {
         fontSize: 22,
@@ -345,7 +532,15 @@ const styles = StyleSheet.create({
         color: "#1E293B",
     },
     slideTitleMobile: {
-        fontSize: 18,
+        fontSize: 20,
+        fontWeight: "700",
+        marginBottom: 12,
+        color: "#1E293B",
+        textAlign: "center",
+    },
+    slideTitleExpandedMobile: {
+        fontSize: 28,
+        marginBottom: 20,
     },
     slideContent: {
         fontSize: 18,
@@ -353,19 +548,36 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     slideContentMobile: {
-        fontSize: 15,
+        fontSize: 16,
+        color: "#475569",
+        textAlign: "center",
+        lineHeight: 24,
+    },
+    slideContentExpandedMobile: {
+        fontSize: 20,
+        lineHeight: 32,
+        color: "#334155",
     },
     slideNavRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        marginTop: 10,
+        marginTop: 16,
+        paddingHorizontal: 16,
     },
     navButton: {
         backgroundColor: "#1E3A8A",
-        padding: 10,
-        borderRadius: 8,
+        padding: 12,
+        borderRadius: 12,
         marginHorizontal: 16,
+        minWidth: 48,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     navButtonDisabled: {
         backgroundColor: "#CBD5E1",
@@ -376,26 +588,203 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
     },
     slideIndicator: {
-        fontSize: 16,
+        fontSize: 15,
         color: "#64748B",
         fontWeight: "600",
+        backgroundColor: "#F1F5F9",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     expandButtonContainer: {
         width: "100%",
         alignItems: "flex-end",
-        marginBottom: 10,
+        marginBottom: 12,
         position: "relative",
         zIndex: 3,
+        paddingHorizontal: 16,
     },
     expandButton: {
         backgroundColor: "#1E3A8A",
-        paddingVertical: 6,
+        paddingVertical: 8,
         paddingHorizontal: 16,
-        borderRadius: 8,
+        borderRadius: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     expandButtonText: {
         color: "#fff",
         fontSize: 14,
         fontWeight: "600",
+    },
+    bottomButtonsContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#ffffff',
+        borderTopWidth: 1,
+        borderTopColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    bottomButton: {
+        backgroundColor: '#1E3A8A',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        minWidth: 140,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    // New styles for landscape navigation
+    landscapeNavButton: {
+        backgroundColor: 'rgba(30, 58, 138, 0.9)',
+        padding: 10,
+        borderRadius: 20,
+        minWidth: 40,
+        minHeight: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    landscapeNavLeft: {
+        left: 20,
+    },
+    landscapeNavRight: {
+        right: 20,
+    },
+    landscapeSlideIndicator: {
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    // Add these new styles for horizontal navigation
+    slideContainer: {
+        position: 'relative',
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 25,
+    },
+    horizontalNavButton: {
+        position: 'absolute',
+        backgroundColor: "#1E3A8A",
+        height: 40,
+        width: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 3,
+        zIndex: 10,
+    },
+    leftNavButton: {
+        left: 0,
+    },
+    rightNavButton: {
+        right: 0,
+    },
+    horizontalNavButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    slideIndicatorContainer: {
+        position: 'absolute',
+        bottom: -20,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    expandedExitButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        backgroundColor: 'rgba(30, 58, 138, 0.9)',
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        zIndex: 101,
+        elevation: 5,
+    },
+    expandedNavButton: {
+        position: 'absolute',
+        backgroundColor: 'rgba(30, 58, 138, 0.85)',
+        height: 60,
+        width: 60,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 4,
+        zIndex: 10,
+        top: '50%',
+        transform: [{ translateY: -30 }],
+    },
+    expandedLeftNavButton: {
+        left: 20,
+    },
+    expandedRightNavButton: {
+        right: 20,
+    },
+    expandedNavButtonText: {
+        color: '#fff',
+        fontSize: 22,
+        fontWeight: 'bold',
+    },
+    expandedSlideIndicatorContainer: {
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    expandedSlideIndicator: {
+        fontSize: 16,
+        color: '#64748B',
+        fontWeight: '600',
+        backgroundColor: 'rgba(241, 245, 249, 0.9)',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
     },
 });
