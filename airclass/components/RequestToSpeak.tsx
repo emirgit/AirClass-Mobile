@@ -226,7 +226,10 @@ export function RequestToSpeak({
 
     const handleCancelRequest = async () => {
         if (!requestStatus?.id) {
-            Alert.alert("Error", "No request ID found");
+            // If we don't have a request ID, we can't cancel the request
+            // Just reset the state since the request might have been cancelled already
+            setIsRequestSent(false);
+            setRequestStatus(null);
             return;
         }
 
