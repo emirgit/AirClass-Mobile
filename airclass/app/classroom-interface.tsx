@@ -597,11 +597,11 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
     },
     pendingRequestOverlay: {
         position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 180 : 168,
+        bottom: Platform.OS === 'ios' ? 320 : 300,
         left: '50%',
         transform: [{ translateX: -175 }],
         backgroundColor: "#7C3AED",
-        padding: 20,
+        padding: 14,
         zIndex: 1000,
         width: 350,
         borderRadius: 16,
