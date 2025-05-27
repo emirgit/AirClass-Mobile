@@ -13,12 +13,15 @@ import {
     TextInput,
     FlatList,
     KeyboardAvoidingView,
+    Image,
+    Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons } from '@expo/vector-icons';
-import * as ScreenOrientation from 'expo-screen-orientation';
+import { Ionicons } from "@expo/vector-icons";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { RequestToSpeak } from "../components/RequestToSpeak";
+import { WebView, WebViewMessageEvent } from "react-native-webview";
 
 // Theme type definition
 type Theme = {
@@ -48,53 +51,53 @@ type Theme = {
 
 // Theme colors
 const LIGHT_THEME: Theme = {
-    primary: '#4F46E5', // Indigo
-    primaryLight: '#818CF8',
-    secondary: '#7C3AED', // Purple
-    background: '#F8FAFC',
-    surface: '#FFFFFF',
-    text: '#1E293B',
-    textLight: '#64748B',
-    border: '#E2E8F0',
-    success: '#10B981',
-    error: '#EF4444',
-    warning: '#F59E0B',
-    tabBarBg: '#FFFFFF',
-    messageSent: '#4F46E5',
-    messageReceived: '#F1F5F9',
-    messageText: '#FFFFFF',
-    messageTime: '#94A3B8',
-    inputBg: '#F1F5F9',
-    avatarBg: '#4F46E5',
-    avatarText: '#FFFFFF',
-    selectedBg: '#EEF2FF',
-    white: '#FFFFFF',
-    slideIndicatorText: '#1E293B',
+    primary: "#4F46E5", // Indigo
+    primaryLight: "#818CF8",
+    secondary: "#7C3AED", // Purple
+    background: "#F8FAFC",
+    surface: "#FFFFFF",
+    text: "#1E293B",
+    textLight: "#64748B",
+    border: "#E2E8F0",
+    success: "#10B981",
+    error: "#EF4444",
+    warning: "#F59E0B",
+    tabBarBg: "#FFFFFF",
+    messageSent: "#4F46E5",
+    messageReceived: "#F1F5F9",
+    messageText: "#FFFFFF",
+    messageTime: "#94A3B8",
+    inputBg: "#F1F5F9",
+    avatarBg: "#4F46E5",
+    avatarText: "#FFFFFF",
+    selectedBg: "#EEF2FF",
+    white: "#FFFFFF",
+    slideIndicatorText: "#1E293B",
 };
 
 const DARK_THEME: Theme = {
-    primary: '#818CF8', // Lighter Indigo
-    primaryLight: '#A5B4FC',
-    secondary: '#A78BFA', // Lighter Purple
-    background: '#0F172A',
-    surface: '#1E293B',
-    text: '#F8FAFC',
-    textLight: '#CBD5E1',
-    border: '#334155',
-    success: '#34D399',
-    error: '#F87171',
-    warning: '#FBBF24',
-    tabBarBg: '#1E293B',
-    messageSent: '#818CF8',
-    messageReceived: '#334155',
-    messageText: '#F8FAFC',
-    messageTime: '#94A3B8',
-    inputBg: '#334155',
-    avatarBg: '#818CF8',
-    avatarText: '#F8FAFC',
-    selectedBg: '#1E3A8A',
-    white: '#FFFFFF',
-    slideIndicatorText: '#000000',
+    primary: "#818CF8", // Lighter Indigo
+    primaryLight: "#A5B4FC",
+    secondary: "#A78BFA", // Lighter Purple
+    background: "#0F172A",
+    surface: "#1E293B",
+    text: "#F8FAFC",
+    textLight: "#CBD5E1",
+    border: "#334155",
+    success: "#34D399",
+    error: "#F87171",
+    warning: "#FBBF24",
+    tabBarBg: "#1E293B",
+    messageSent: "#818CF8",
+    messageReceived: "#334155",
+    messageText: "#F8FAFC",
+    messageTime: "#94A3B8",
+    inputBg: "#334155",
+    avatarBg: "#818CF8",
+    avatarText: "#F8FAFC",
+    selectedBg: "#1E3A8A",
+    white: "#FFFFFF",
+    slideIndicatorText: "#000000",
 };
 
 const slidesData = [
@@ -136,534 +139,846 @@ interface AttendanceResponse {
     };
 }
 
-const createStyles = (COLORS: Theme) => StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    containerMobile: {
-        padding: 16,
-    },
-    containerExpanded: {
-        backgroundColor: COLORS.background,
-    },
-    safeArea: {
-        flex: 1,
-        backgroundColor: COLORS.background,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: COLORS.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-    },
-    headerContent: {
-        flex: 1,
-    },
-    classroomCode: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.text,
-    },
-    welcomeText: {
-        fontSize: 14,
-        color: COLORS.textLight,
-        marginTop: 4,
-    },
-    headerButtons: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    themeButton: {
-        backgroundColor: COLORS.inputBg,
-        padding: 8,
-        borderRadius: 12,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    expandButton: {
-        backgroundColor: COLORS.primary,
-        padding: 8,
-        borderRadius: 12,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    mainContent: {
-        flex: 1,
-        flexDirection: 'row',
-        padding: 24,
-        position: 'relative',
-    },
-    mainContentMobile: {
-        padding: 16,
-        flexDirection: 'column',
-    },
-    mainContentExpanded: {
-        padding: 0,
-    },
-    mainContentLandscape: {
-        flexDirection: 'row',
-        padding: 16,
-    },
-    slideSection: {
-        flex: 4,
-        marginRight: 24,
-        width: '100%',
-    },
-    slideSectionMobile: {
-        marginRight: 0,
-        marginBottom: 24,
-    },
-    slideSectionExpanded: {
-        flex: 1,
-        marginRight: 0,
-        padding: 16,
-    },
-    slideSectionLandscape: {
-        flex: 3,
-        marginRight: 16,
-    },
-    slideBox: {
-        backgroundColor: COLORS.surface,
-        borderRadius: 20,
-        padding: 24,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 8,
-        width: '100%',
-        maxWidth: 800,
-        alignSelf: 'center',
-    },
-    slideBoxExpanded: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: Math.max(16, Dimensions.get('window').width * 0.02),
-        maxWidth: '100%',
-    },
-    slideBoxLandscape: {
-        minHeight: 250,
-        padding: 20,
-    },
-    expandedHeader: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        marginBottom: 20,
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-    },
-    slideTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: COLORS.text,
-        marginBottom: 16,
-        textAlign: 'center',
-    },
-    slideTitleExpanded: {
-        fontSize: Math.max(24, Dimensions.get('window').width * 0.03),
-        marginBottom: Math.max(16, Dimensions.get('window').width * 0.02),
-        textAlign: 'center',
-    },
-    slideTitleLandscape: {
-        fontSize: 22,
-        marginBottom: 12,
-    },
-    slideContent: {
-        fontSize: 16,
-        color: COLORS.textLight,
-        lineHeight: 24,
-        textAlign: 'center',
-    },
-    slideContentExpanded: {
-        fontSize: Math.max(16, Dimensions.get('window').width * 0.02),
-        lineHeight: Math.max(24, Dimensions.get('window').width * 0.03),
-        textAlign: 'center',
-        maxWidth: 800,
-    },
-    slideContentLandscape: {
-        fontSize: 16,
-        lineHeight: 24,
-    },
-    slideNavContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        paddingHorizontal: 16,
-        marginTop: 20,
-    },
-    slideNavContainerExpanded: {
-        paddingHorizontal: Math.max(16, Dimensions.get('window').width * 0.02),
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: Math.max(48, Dimensions.get('window').width * 0.06),
-        position: 'relative',
-        bottom: -40,
-    },
-    slideNavContainerLandscape: {
-        marginTop: 16,
-        paddingHorizontal: 8,
-    },
-    navButton: {
-        backgroundColor: COLORS.primary,
-        padding: Math.max(6, Dimensions.get('window').width * 0.01),
-        borderRadius: 8,
-        opacity: 0.9,
-        width: Math.max(32, Dimensions.get('window').width * 0.04),
-        height: Math.max(32, Dimensions.get('window').width * 0.04),
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginHorizontal: Math.max(8, Dimensions.get('window').width * 0.01),
-    },
-    navButtonDisabled: {
-        backgroundColor: COLORS.border,
-        opacity: 0.5,
-    },
-    slideIndicator: {
-        backgroundColor: COLORS.white,
-        paddingHorizontal: Math.max(10, Dimensions.get('window').width * 0.015),
-        paddingVertical: Math.max(4, Dimensions.get('window').width * 0.005),
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        minWidth: Math.max(60, Dimensions.get('window').width * 0.08),
-        alignItems: 'center',
-    },
-    slideIndicatorText: {
-        fontSize: Math.max(12, Dimensions.get('window').width * 0.015),
-        fontWeight: '600',
-        color: COLORS.slideIndicatorText,
-        textAlign: 'center',
-    },
-    sideSection: {
-        flex: 1,
-        backgroundColor: 'transparent',
-        padding: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        maxWidth: 400,
-        alignSelf: 'center',
-    },
-    sideSectionMobile: {
-        marginTop: 16,
-        width: '100%',
-    },
-    sideSectionLandscape: {
-        flex: 1,
-        padding: 16,
-        maxWidth: '100%',
-    },
-    tabBar: {
-        flexDirection: 'row',
-        backgroundColor: COLORS.tabBarBg,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-        paddingTop: 8,
-    },
-    tabBarMobile: {
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-    },
-    tabBarLandscape: {
-        paddingBottom: 8,
-    },
-    tabItem: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 8,
-    },
-    tabLabel: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: COLORS.primary,
-        marginTop: 4,
-    },
-    tabLabelInactive: {
-        color: COLORS.textLight,
-    },
-    messagesContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        backgroundColor: COLORS.background,
-    },
-    participantsList: {
-        width: 280,
-        borderRightWidth: 1,
-        borderRightColor: COLORS.border,
-        backgroundColor: COLORS.surface,
-    },
-    participantsListCollapsed: {
-        width: 0,
-        overflow: 'hidden',
-    },
-    participantsHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-        backgroundColor: COLORS.surface,
-    },
-    collapseButton: {
-        padding: 8,
-        borderRadius: 8,
-        backgroundColor: COLORS.inputBg,
-    },
-    menuButton: {
-        padding: 8,
-        marginRight: 12,
-        borderRadius: 8,
-        backgroundColor: COLORS.inputBg,
-    },
-    chatContainer: {
-        flex: 1,
-        backgroundColor: COLORS.surface,
-    },
-    chatHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-        backgroundColor: COLORS.surface,
-    },
-    chatHeaderInfo: {
-        flex: 1,
-    },
-    chatHeaderText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.text,
-    },
-    chatHeaderSubtext: {
-        fontSize: 12,
-        color: COLORS.textLight,
-        marginTop: 2,
-    },
-    noChatSelected: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: COLORS.surface,
-    },
-    noChatText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: COLORS.textLight,
-        textAlign: 'center',
-    },
-    messageBubble: {
-        maxWidth: '80%',
-        padding: 12,
-        borderRadius: 20,
-        marginVertical: 4,
-        marginHorizontal: 16,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    sentMessage: {
-        backgroundColor: COLORS.messageSent,
-        alignSelf: 'flex-end',
-        borderBottomRightRadius: 4,
-    },
-    receivedMessage: {
-        backgroundColor: COLORS.messageReceived,
-        alignSelf: 'flex-start',
-        borderBottomLeftRadius: 4,
-    },
-    messageText: {
-        fontSize: 14,
-    },
-    sentMessageText: {
-        color: COLORS.messageText,
-    },
-    receivedMessageText: {
-        color: COLORS.text,
-    },
-    messageTime: {
-        fontSize: 10,
-        marginTop: 4,
-    },
-    sentMessageTime: {
-        color: COLORS.messageText,
-        opacity: 0.7,
-    },
-    receivedMessageTime: {
-        color: COLORS.messageTime,
-    },
-    messageInputContainer: {
-        flexDirection: 'row',
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
-        backgroundColor: COLORS.surface,
-    },
-    messageInput: {
-        flex: 1,
-        backgroundColor: COLORS.inputBg,
-        borderRadius: 24,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginRight: 8,
-        fontSize: 14,
-        color: COLORS.text,
-    },
-    sendButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: COLORS.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    tabLabelActive: {
-        color: COLORS.primary,
-    },
-    filesContainer: {
-        flex: 1,
-        backgroundColor: COLORS.surface,
-        padding: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.text,
-    },
-    participantItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-    },
-    selectedParticipant: {
-        backgroundColor: COLORS.selectedBg,
-    },
-    participantAvatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: COLORS.avatarBg,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    avatarText: {
-        color: COLORS.avatarText,
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    participantInfo: {
-        flex: 1,
-    },
-    participantName: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: COLORS.text,
-        marginBottom: 2,
-    },
-    participantEmail: {
-        fontSize: 12,
-        color: COLORS.textLight,
-    },
-    pendingRequestOverlay: {
-        position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 180 : 168,
-        left: '50%',
-        transform: [{ translateX: -175 }],
-        backgroundColor: "#7C3AED",
-        padding: 20,
-        zIndex: 1000,
-        width: 350,
-        borderRadius: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 4,
-        marginHorizontal: 20,
-    },
-    pendingRequestContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-    },
-    pendingRequestText: {
-        color: COLORS.white,
-        fontSize: 18,
-        fontWeight: '600',
-        textAlign: 'center',
-        width: '100%',
-        marginBottom: 4,
-    },
-    pendingRequestSubtext: {
-        color: COLORS.white,
-        fontSize: 15,
-        opacity: 0.9,
-        marginTop: 4,
-        marginBottom: 16,
-        textAlign: 'center',
-        width: '100%',
-        lineHeight: 20,
-    },
-    pendingRequestButtons: {
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 8,
-        width: '100%',
-        justifyContent: 'center',
-    },
-    pendingRequestButton: {
-        flex: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        maxWidth: 160,
-    },
-    pendingRequestButtonDanger: {
-        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-        borderColor: 'rgba(239, 68, 68, 0.3)',
-    },
-    pendingRequestButtonText: {
-        color: COLORS.white,
-        fontSize: 14,
-        fontWeight: '500',
-    },
-});
+// Add Slide interface
+interface Slide {
+    id: number;
+    classroom_id: number;
+    full_path: string;
+    created_at: string;
+    file_type?: string; // 'pdf' or 'ppt' or 'pptx'
+    total_pages?: number;
+    current_page?: number;
+}
+
+// Add File interface
+interface File {
+    id: number;
+    classroom_id: number;
+    full_path: string;
+    created_at: string;
+    file_type?: string;
+    file_name?: string;
+}
+
+// Add base URL constant
+const API_BASE_URL = "http://159.89.19.111/airclass-api";
+
+const createStyles = (COLORS: Theme) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: COLORS.background,
+        },
+        containerMobile: {
+            padding: 16,
+        },
+        containerExpanded: {
+            backgroundColor: COLORS.background,
+        },
+        safeArea: {
+            flex: 1,
+            backgroundColor: COLORS.background,
+        },
+        header: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: 16,
+            backgroundColor: COLORS.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+        },
+        headerContent: {
+            flex: 1,
+        },
+        classroomCode: {
+            fontSize: 16,
+            fontWeight: "600",
+            color: COLORS.text,
+        },
+        welcomeText: {
+            fontSize: 14,
+            color: COLORS.textLight,
+            marginTop: 4,
+        },
+        headerButtons: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+        },
+        themeButton: {
+            backgroundColor: COLORS.inputBg,
+            padding: 8,
+            borderRadius: 12,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        expandButton: {
+            backgroundColor: COLORS.primary,
+            padding: 8,
+            borderRadius: 12,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        mainContent: {
+            flex: 1,
+            flexDirection: "row",
+            padding: 24,
+            position: "relative",
+        },
+        mainContentMobile: {
+            padding: 16,
+            flexDirection: "column",
+        },
+        mainContentExpanded: {
+            padding: 0,
+        },
+        mainContentLandscape: {
+            flexDirection: "row",
+            padding: 16,
+        },
+        slideSection: {
+            flex: 4,
+            marginRight: 24,
+            width: "100%",
+        },
+        slideSectionMobile: {
+            marginRight: 0,
+            marginBottom: 24,
+        },
+        slideSectionExpanded: {
+            flex: 1,
+            marginRight: 0,
+            padding: 16,
+        },
+        slideSectionLandscape: {
+            flex: 3,
+            marginRight: 16,
+        },
+        slideBox: {
+            backgroundColor: COLORS.surface,
+            borderRadius: 20,
+            padding: 24,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 8,
+            width: "100%",
+            maxWidth: 800,
+            alignSelf: "center",
+            minHeight: 500,
+            flex: 1,
+        },
+        slideBoxExpanded: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: Math.max(16, Dimensions.get("window").width * 0.02),
+            maxWidth: "100%",
+            minHeight: "80%",
+        },
+        slideBoxLandscape: {
+            minHeight: 400,
+            padding: 20,
+            flex: 1,
+        },
+        expandedHeader: {
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            marginBottom: 20,
+            paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+        },
+        slideTitle: {
+            fontSize: 24,
+            fontWeight: "700",
+            color: COLORS.text,
+            marginBottom: 16,
+            textAlign: "center",
+        },
+        slideTitleExpanded: {
+            fontSize: Math.max(24, Dimensions.get("window").width * 0.03),
+            marginBottom: Math.max(16, Dimensions.get("window").width * 0.02),
+            textAlign: "center",
+        },
+        slideTitleLandscape: {
+            fontSize: 22,
+            marginBottom: 12,
+        },
+        slideContent: {
+            fontSize: 16,
+            color: COLORS.textLight,
+            lineHeight: 24,
+            textAlign: "center",
+        },
+        slideContentExpanded: {
+            fontSize: Math.max(16, Dimensions.get("window").width * 0.02),
+            lineHeight: Math.max(24, Dimensions.get("window").width * 0.03),
+            textAlign: "center",
+            maxWidth: 800,
+        },
+        slideContentLandscape: {
+            fontSize: 16,
+            lineHeight: 24,
+        },
+        slideNavContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            paddingHorizontal: 16,
+            marginTop: 20,
+        },
+        slideNavContainerExpanded: {
+            paddingHorizontal: Math.max(
+                16,
+                Dimensions.get("window").width * 0.02
+            ),
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: Math.max(48, Dimensions.get("window").width * 0.06),
+            position: "relative",
+            bottom: -40,
+        },
+        slideNavContainerLandscape: {
+            marginTop: 16,
+            paddingHorizontal: 8,
+        },
+        navButton: {
+            backgroundColor: COLORS.primary,
+            padding: Math.max(6, Dimensions.get("window").width * 0.01),
+            borderRadius: 8,
+            opacity: 0.9,
+            width: Math.max(32, Dimensions.get("window").width * 0.04),
+            height: Math.max(32, Dimensions.get("window").width * 0.04),
+            alignItems: "center",
+            justifyContent: "center",
+            marginHorizontal: Math.max(
+                8,
+                Dimensions.get("window").width * 0.01
+            ),
+        },
+        navButtonDisabled: {
+            backgroundColor: COLORS.border,
+            opacity: 0.5,
+        },
+        slideIndicator: {
+            backgroundColor: COLORS.white,
+            paddingHorizontal: Math.max(
+                10,
+                Dimensions.get("window").width * 0.015
+            ),
+            paddingVertical: Math.max(
+                4,
+                Dimensions.get("window").width * 0.005
+            ),
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: COLORS.border,
+            minWidth: Math.max(60, Dimensions.get("window").width * 0.08),
+            alignItems: "center",
+        },
+        slideIndicatorText: {
+            fontSize: Math.max(12, Dimensions.get("window").width * 0.015),
+            fontWeight: "600",
+            color: COLORS.slideIndicatorText,
+            textAlign: "center",
+        },
+        sideSection: {
+            flex: 1,
+            backgroundColor: "transparent",
+            padding: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            maxWidth: 400,
+            alignSelf: "center",
+        },
+        sideSectionMobile: {
+            marginTop: 16,
+            width: "100%",
+        },
+        sideSectionLandscape: {
+            flex: 1,
+            padding: 16,
+            maxWidth: "100%",
+        },
+        tabBar: {
+            flexDirection: "row",
+            backgroundColor: COLORS.tabBarBg,
+            borderTopWidth: 1,
+            borderTopColor: COLORS.border,
+            paddingBottom: Platform.OS === "ios" ? 20 : 8,
+            paddingTop: 8,
+        },
+        tabBarMobile: {
+            paddingBottom: Platform.OS === "ios" ? 20 : 8,
+        },
+        tabBarLandscape: {
+            paddingBottom: 8,
+        },
+        tabItem: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 8,
+        },
+        tabLabel: {
+            fontSize: 12,
+            fontWeight: "600",
+            color: COLORS.primary,
+            marginTop: 4,
+        },
+        tabLabelInactive: {
+            color: COLORS.textLight,
+        },
+        messagesContainer: {
+            flex: 1,
+            flexDirection: "row",
+            backgroundColor: COLORS.background,
+        },
+        participantsList: {
+            width: 280,
+            borderRightWidth: 1,
+            borderRightColor: COLORS.border,
+            backgroundColor: COLORS.surface,
+        },
+        participantsListCollapsed: {
+            width: 0,
+            overflow: "hidden",
+        },
+        participantsHeader: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+            backgroundColor: COLORS.surface,
+        },
+        collapseButton: {
+            padding: 8,
+            borderRadius: 8,
+            backgroundColor: COLORS.inputBg,
+        },
+        menuButton: {
+            padding: 8,
+            marginRight: 12,
+            borderRadius: 8,
+            backgroundColor: COLORS.inputBg,
+        },
+        chatContainer: {
+            flex: 1,
+            backgroundColor: COLORS.surface,
+        },
+        chatHeader: {
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+            backgroundColor: COLORS.surface,
+        },
+        chatHeaderInfo: {
+            flex: 1,
+        },
+        chatHeaderText: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: COLORS.text,
+        },
+        chatHeaderSubtext: {
+            fontSize: 12,
+            color: COLORS.textLight,
+            marginTop: 2,
+        },
+        noChatSelected: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: COLORS.surface,
+        },
+        noChatText: {
+            marginTop: 16,
+            fontSize: 16,
+            color: COLORS.textLight,
+            textAlign: "center",
+        },
+        messageBubble: {
+            maxWidth: "80%",
+            padding: 12,
+            borderRadius: 20,
+            marginVertical: 4,
+            marginHorizontal: 16,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        sentMessage: {
+            backgroundColor: COLORS.messageSent,
+            alignSelf: "flex-end",
+            borderBottomRightRadius: 4,
+        },
+        receivedMessage: {
+            backgroundColor: COLORS.messageReceived,
+            alignSelf: "flex-start",
+            borderBottomLeftRadius: 4,
+        },
+        messageText: {
+            fontSize: 14,
+        },
+        sentMessageText: {
+            color: COLORS.messageText,
+        },
+        receivedMessageText: {
+            color: COLORS.text,
+        },
+        messageTime: {
+            fontSize: 10,
+            marginTop: 4,
+        },
+        sentMessageTime: {
+            color: COLORS.messageText,
+            opacity: 0.7,
+        },
+        receivedMessageTime: {
+            color: COLORS.messageTime,
+        },
+        messageInputContainer: {
+            flexDirection: "row",
+            padding: 16,
+            borderTopWidth: 1,
+            borderTopColor: COLORS.border,
+            backgroundColor: COLORS.surface,
+        },
+        messageInput: {
+            flex: 1,
+            backgroundColor: COLORS.inputBg,
+            borderRadius: 24,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            marginRight: 8,
+            fontSize: 14,
+            color: COLORS.text,
+        },
+        sendButton: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: COLORS.primary,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
+        },
+        tabLabelActive: {
+            color: COLORS.primary,
+        },
+        filesContainer: {
+            flex: 1,
+            backgroundColor: COLORS.surface,
+            padding: 16,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: "600",
+            color: COLORS.text,
+        },
+        participantItem: {
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+        },
+        selectedParticipant: {
+            backgroundColor: COLORS.selectedBg,
+        },
+        participantAvatar: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: COLORS.avatarBg,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
+        },
+        avatarText: {
+            color: COLORS.avatarText,
+            fontSize: 18,
+            fontWeight: "600",
+        },
+        participantInfo: {
+            flex: 1,
+        },
+        participantName: {
+            fontSize: 16,
+            fontWeight: "500",
+            color: COLORS.text,
+            marginBottom: 2,
+        },
+        participantEmail: {
+            fontSize: 12,
+            color: COLORS.textLight,
+        },
+        pendingRequestOverlay: {
+            position: "absolute",
+            bottom: Platform.OS === "ios" ? 180 : 168,
+            left: "50%",
+            transform: [{ translateX: -175 }],
+            backgroundColor: "#7C3AED",
+            padding: 20,
+            zIndex: 1000,
+            width: 350,
+            borderRadius: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 4,
+            marginHorizontal: 20,
+        },
+        pendingRequestContainer: {
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+        },
+        pendingRequestText: {
+            color: COLORS.white,
+            fontSize: 18,
+            fontWeight: "600",
+            textAlign: "center",
+            width: "100%",
+            marginBottom: 4,
+        },
+        pendingRequestSubtext: {
+            color: COLORS.white,
+            fontSize: 15,
+            opacity: 0.9,
+            marginTop: 4,
+            marginBottom: 16,
+            textAlign: "center",
+            width: "100%",
+            lineHeight: 20,
+        },
+        pendingRequestButtons: {
+            flexDirection: "row",
+            gap: 12,
+            marginTop: 8,
+            width: "100%",
+            justifyContent: "center",
+        },
+        pendingRequestButton: {
+            flex: 1,
+            backgroundColor: "rgba(255, 255, 255, 0.2)",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: "rgba(255, 255, 255, 0.3)",
+            alignItems: "center",
+            justifyContent: "center",
+            maxWidth: 160,
+        },
+        pendingRequestButtonDanger: {
+            backgroundColor: "rgba(239, 68, 68, 0.2)",
+            borderColor: "rgba(239, 68, 68, 0.3)",
+        },
+        pendingRequestButtonText: {
+            color: COLORS.white,
+            fontSize: 14,
+            fontWeight: "500",
+        },
+        slideImage: {
+            width: "100%",
+            height: 400,
+            borderRadius: 12,
+            backgroundColor: COLORS.surface,
+        },
+        slideImageExpanded: {
+            height: "80%",
+            maxHeight: 800,
+        },
+        slideImageLandscape: {
+            height: 300,
+        },
+        noSlidesContainer: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+        },
+        noSlidesText: {
+            marginTop: 16,
+            fontSize: 16,
+            color: COLORS.textLight,
+            textAlign: "center",
+        },
+        fileList: {
+            flex: 1,
+            marginTop: 16,
+        },
+        fileItem: {
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            backgroundColor: COLORS.white,
+            borderRadius: 12,
+            marginBottom: 12,
+            shadowColor: COLORS.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        fileIcon: {
+            width: 40,
+            height: 40,
+            borderRadius: 8,
+            backgroundColor: COLORS.primaryLight,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+        },
+        fileInfo: {
+            flex: 1,
+        },
+        fileName: {
+            fontSize: 16,
+            fontWeight: "600",
+            color: COLORS.text,
+            marginBottom: 4,
+        },
+        fileDate: {
+            fontSize: 12,
+            color: COLORS.textLight,
+        },
+        downloadButton: {
+            padding: 8,
+            borderRadius: 8,
+            backgroundColor: COLORS.primary,
+        },
+        noFilesContainer: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+        },
+        noFilesText: {
+            marginTop: 16,
+            fontSize: 16,
+            color: COLORS.textLight,
+            textAlign: "center",
+        },
+    });
+
+// Add file type detection function
+const getFileType = (path: string): string => {
+    const extension = path.split(".").pop()?.toLowerCase();
+    if (extension === "pdf") return "pdf";
+    if (["ppt", "pptx"].includes(extension || "")) return "ppt";
+    return "unknown";
+};
+
+// Update the PDFViewer component
+const PDFViewer = ({
+    uri,
+    currentPage,
+    onPageChange,
+}: {
+    uri: string;
+    currentPage: number;
+    onPageChange: (page: number) => void;
+}) => {
+    const pdfUrl = `${uri}#page=${currentPage}`;
+    console.log("[PDFViewer] Component mounted with:", {
+        uri,
+        currentPage,
+        pdfUrl,
+        timestamp: new Date().toISOString(),
+    });
+
+    return (
+        <View style={{ flex: 1, minHeight: 400, backgroundColor: "#fff" }}>
+            <WebView
+                source={{
+                    uri: pdfUrl,
+                    headers: {
+                        Accept: "application/pdf",
+                        "Content-Type": "application/pdf",
+                    },
+                }}
+                style={{
+                    flex: 1,
+                    backgroundColor: "#fff",
+                }}
+                originWhitelist={["*"]}
+                onLoadStart={() =>
+                    console.log("[PDFViewer] Loading started:", pdfUrl)
+                }
+                onLoad={() =>
+                    console.log("[PDFViewer] Loaded successfully:", pdfUrl)
+                }
+                onError={(syntheticEvent) => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.error("[PDFViewer] Loading error:", {
+                        description: nativeEvent.description,
+                        url: nativeEvent.url,
+                        code: nativeEvent.code,
+                        timestamp: new Date().toISOString(),
+                    });
+                }}
+                onHttpError={(syntheticEvent) => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.error("[PDFViewer] HTTP error:", {
+                        statusCode: nativeEvent.statusCode,
+                        url: nativeEvent.url,
+                        timestamp: new Date().toISOString(),
+                    });
+                }}
+                onMessage={(event: WebViewMessageEvent) => {
+                    console.log("[PDFViewer] Message received:", {
+                        data: event.nativeEvent.data,
+                        timestamp: new Date().toISOString(),
+                    });
+                }}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                startInLoadingState={true}
+                scalesPageToFit={true}
+                bounces={false}
+                scrollEnabled={true}
+                renderLoading={() => (
+                    <View
+                        style={{
+                            flex: 1,
+                            justifyContent: "center",
+                            alignItems: "center",
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: "#fff",
+                        }}
+                    >
+                        <ActivityIndicator size="large" color="#4F46E5" />
+                    </View>
+                )}
+                injectedJavaScript={`
+                    (function() {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                            type: 'pdfLoaded',
+                            url: window.location.href
+                        }));
+                        
+                        // Try to force PDF display
+                        document.body.style.margin = '0';
+                        document.body.style.padding = '0';
+                        document.body.style.overflow = 'hidden';
+                        
+                        // Add viewport meta tag if not present
+                        if (!document.querySelector('meta[name="viewport"]')) {
+                            const meta = document.createElement('meta');
+                            meta.name = 'viewport';
+                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                            document.head.appendChild(meta);
+                        }
+                    })();
+                `}
+            />
+        </View>
+    );
+};
+
+// Update the PowerPointViewer component
+const PowerPointViewer = ({
+    uri,
+    currentPage,
+    onPageChange,
+}: {
+    uri: string;
+    currentPage: number;
+    onPageChange: (page: number) => void;
+}) => {
+    const pptUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+        uri
+    )}&wdStartOn=${currentPage}`;
+    console.log("[PowerPointViewer] Component mounted with:", {
+        uri,
+        currentPage,
+        pptUrl,
+        timestamp: new Date().toISOString(),
+    });
+
+    return (
+        <WebView
+            source={{ uri: pptUrl }}
+            style={{ flex: 1, backgroundColor: "#fff", minHeight: 400 }}
+            onLoadStart={() =>
+                console.log("[PowerPointViewer] Loading started:", pptUrl)
+            }
+            onLoad={() =>
+                console.log("[PowerPointViewer] Loaded successfully:", pptUrl)
+            }
+            onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.error("[PowerPointViewer] Loading error:", {
+                    description: nativeEvent.description,
+                    url: nativeEvent.url,
+                    code: nativeEvent.code,
+                    timestamp: new Date().toISOString(),
+                });
+            }}
+            onHttpError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.error("[PowerPointViewer] HTTP error:", {
+                    statusCode: nativeEvent.statusCode,
+                    url: nativeEvent.url,
+                    timestamp: new Date().toISOString(),
+                });
+            }}
+            onMessage={(event: WebViewMessageEvent) => {
+                console.log("[PowerPointViewer] Message received:", {
+                    data: event.nativeEvent.data,
+                    timestamp: new Date().toISOString(),
+                });
+            }}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+                <View
+                    style={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    <ActivityIndicator size="large" color="#4F46E5" />
+                </View>
+            )}
+        />
+    );
+};
 
 export default function ClassroomInterfaceScreen() {
     const { code } = useLocalSearchParams<{ code: string }>();
@@ -674,29 +989,42 @@ export default function ClassroomInterfaceScreen() {
     const [slideIndex, setSlideIndex] = useState(0);
     const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(false);
-    const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-    const [activeTab, setActiveTab] = useState('class');
+    const [dimensions, setDimensions] = useState(Dimensions.get("window"));
+    const [activeTab, setActiveTab] = useState("class");
     const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [classParticipants, setClassParticipants] = useState<Participant[]>([]);
-    const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+    const [newMessage, setNewMessage] = useState("");
+    const [classParticipants, setClassParticipants] = useState<Participant[]>(
+        []
+    );
+    const [selectedParticipant, setSelectedParticipant] =
+        useState<Participant | null>(null);
     const [isParticipantsOpen, setIsParticipantsOpen] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [requestStatus, setRequestStatus] = useState<any>(null);
+    const [slides, setSlides] = useState<Slide[]>([]);
+    const [isLoadingSlides, setIsLoadingSlides] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [fileType, setFileType] = useState<string>("unknown");
+    const [files, setFiles] = useState<File[]>([]);
+    const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const COLORS = isDarkMode ? DARK_THEME : LIGHT_THEME;
     const styles = createStyles(COLORS);
     const requestToSpeakRef = React.useRef<any>(null);
 
     // Handle orientation changes
     useEffect(() => {
-        const subscription = Dimensions.addEventListener('change', ({ window }) => {
-            setDimensions(window);
-            if (window.width > window.height) {
-                setIsExpanded(true);
-            } else {
-                setIsExpanded(false);
+        const subscription = Dimensions.addEventListener(
+            "change",
+            ({ window }) => {
+                setDimensions(window);
+                if (window.width > window.height) {
+                    setIsExpanded(true);
+                } else {
+                    setIsExpanded(false);
+                }
             }
-        });
+        );
 
         return () => subscription?.remove();
     }, []);
@@ -818,7 +1146,10 @@ export default function ClassroomInterfaceScreen() {
                     setClassParticipants(data.data.attendance_list);
                     console.log(`Fetched ${data.data.total_students} students`);
                 } else {
-                    console.error("Failed to fetch participants:", data.message);
+                    console.error(
+                        "Failed to fetch participants:",
+                        data.message
+                    );
                 }
             } catch (error) {
                 console.error("Error fetching participants:", error);
@@ -830,33 +1161,250 @@ export default function ClassroomInterfaceScreen() {
         }
     }, [code]);
 
+    // Update the slide fetching effect to include more detailed logging
+    useEffect(() => {
+        const fetchSlides = async () => {
+            try {
+                const token = await AsyncStorage.getItem("jwtToken");
+                const classroomId = await AsyncStorage.getItem("classroomId");
+                if (!token || !classroomId) {
+                    console.error("[fetchSlides] Missing required data:", {
+                        hasToken: !!token,
+                        classroomId,
+                        timestamp: new Date().toISOString(),
+                    });
+                    return;
+                }
+
+                console.log("[fetchSlides] Starting fetch for classroom:", {
+                    classroomId,
+                    timestamp: new Date().toISOString(),
+                });
+
+                const response = await fetch(
+                    `${API_BASE_URL}/airclass-api/slide?classroom_id=${classroomId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const data = await response.json();
+                console.log("[fetchSlides] API Response:", {
+                    status: data.status,
+                    message: data.message,
+                    slideCount: Array.isArray(data.data) ? data.data.length : 0,
+                    timestamp: new Date().toISOString(),
+                });
+
+                if (data.status && Array.isArray(data.data)) {
+                    const processedSlides = data.data.map((slide: Slide) => {
+                        const fileType = getFileType(slide.full_path);
+                        const fullUrl = `${API_BASE_URL}${slide.full_path}`;
+                        console.log("[fetchSlides] Processing slide:", {
+                            id: slide.id,
+                            path: slide.full_path,
+                            fileType,
+                            fullUrl,
+                            timestamp: new Date().toISOString(),
+                        });
+                        return {
+                            ...slide,
+                            file_type: fileType,
+                        };
+                    });
+
+                    setSlides(processedSlides);
+
+                    if (processedSlides.length > 0) {
+                        const firstSlide = processedSlides[0];
+                        console.log("[fetchSlides] Setting initial slide:", {
+                            id: firstSlide.id,
+                            fileType: firstSlide.file_type,
+                            url: `${API_BASE_URL}${firstSlide.full_path}`,
+                            timestamp: new Date().toISOString(),
+                        });
+                        setFileType(firstSlide.file_type || "unknown");
+                        setTotalPages(firstSlide.file_type === "pdf" ? 1 : 1);
+                    }
+                } else {
+                    console.error("[fetchSlides] Invalid API response:", {
+                        status: data.status,
+                        message: data.message,
+                        data: data.data,
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+            } catch (error) {
+                console.error("[fetchSlides] Error:", {
+                    error,
+                    timestamp: new Date().toISOString(),
+                });
+            } finally {
+                setIsLoadingSlides(false);
+            }
+        };
+
+        fetchSlides();
+    }, []);
+
+    // Update the slide navigation functions
     const goToPrevSlide = () => {
         setSlideIndex((prev) => Math.max(prev - 1, 0));
     };
+
     const goToNextSlide = () => {
-        setSlideIndex((prev) => Math.min(prev + 1, slidesData.length - 1));
+        setSlideIndex((prev) => Math.min(prev + 1, slides.length - 1));
     };
+
+    // Update page navigation functions
+    const goToPrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+        }
+    };
+
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage((prev) => prev + 1);
+        }
+    };
+
     const handleAttendance = () => {
         router.push("/attendance");
+    };
+
+    // Add files fetching effect
+    useEffect(() => {
+        const fetchFiles = async () => {
+            try {
+                const token = await AsyncStorage.getItem("jwtToken");
+                const classroomId = await AsyncStorage.getItem("classroomId");
+                if (!token || !classroomId) {
+                    console.error("[fetchFiles] Missing required data:", {
+                        hasToken: !!token,
+                        classroomId,
+                        timestamp: new Date().toISOString(),
+                    });
+                    return;
+                }
+
+                console.log("[fetchFiles] Starting fetch for classroom:", {
+                    classroomId,
+                    timestamp: new Date().toISOString(),
+                });
+
+                const response = await fetch(
+                    `${API_BASE_URL}/airclass-api/slide?classroom_id=${classroomId}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const data = await response.json();
+                console.log("[fetchFiles] API Response:", {
+                    status: data.status,
+                    message: data.message,
+                    fileCount: Array.isArray(data.data) ? data.data.length : 0,
+                    timestamp: new Date().toISOString(),
+                });
+
+                if (data.status && Array.isArray(data.data)) {
+                    const processedFiles = data.data.map((file: File) => {
+                        const fileType = getFileType(file.full_path);
+                        const fileName =
+                            file.full_path.split("/").pop() || "Unknown file";
+                        console.log("[fetchFiles] Processing file:", {
+                            id: file.id,
+                            path: file.full_path,
+                            fileType,
+                            fileName,
+                            timestamp: new Date().toISOString(),
+                        });
+                        return {
+                            ...file,
+                            file_type: fileType,
+                            file_name: fileName,
+                        };
+                    });
+
+                    setFiles(processedFiles);
+                } else {
+                    console.error("[fetchFiles] Invalid API response:", {
+                        status: data.status,
+                        message: data.message,
+                        data: data.data,
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+            } catch (error) {
+                console.error("[fetchFiles] Error:", {
+                    error,
+                    timestamp: new Date().toISOString(),
+                });
+            } finally {
+                setIsLoadingFiles(false);
+            }
+        };
+
+        if (activeTab === "files") {
+            fetchFiles();
+        }
+    }, [activeTab]);
+
+    const handleFileDownload = (file: File) => {
+        const fileUrl = `${API_BASE_URL}${file.full_path}`;
+        Linking.openURL(fileUrl).catch((err) => {
+            console.error("[handleFileDownload] Error opening URL:", {
+                error: err,
+                url: fileUrl,
+                timestamp: new Date().toISOString(),
+            });
+            Alert.alert("Error", "Could not open the file. Please try again.");
+        });
+    };
+
+    const getFileIcon = (fileType: string) => {
+        switch (fileType) {
+            case "pdf":
+                return "document-text";
+            case "ppt":
+                return "easel";
+            default:
+                return "document";
+        }
     };
 
     const renderMessagesSection = () => (
         <View style={styles.messagesContainer}>
             {/* Participants Side Menu */}
-            <View style={[
-                styles.participantsList,
-                !isParticipantsOpen && styles.participantsListCollapsed
-            ]}>
+            <View
+                style={[
+                    styles.participantsList,
+                    !isParticipantsOpen && styles.participantsListCollapsed,
+                ]}
+            >
                 <View style={styles.participantsHeader}>
                     <Text style={styles.sectionTitle}>Class Participants</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.collapseButton}
-                        onPress={() => setIsParticipantsOpen(!isParticipantsOpen)}
+                        onPress={() =>
+                            setIsParticipantsOpen(!isParticipantsOpen)
+                        }
                     >
-                        <Ionicons 
-                            name={isParticipantsOpen ? "chevron-back" : "chevron-forward"} 
-                            size={24} 
-                            color={COLORS.textLight} 
+                        <Ionicons
+                            name={
+                                isParticipantsOpen
+                                    ? "chevron-back"
+                                    : "chevron-forward"
+                            }
+                            size={24}
+                            color={COLORS.textLight}
                         />
                     </TouchableOpacity>
                 </View>
@@ -868,18 +1416,25 @@ export default function ClassroomInterfaceScreen() {
                             <TouchableOpacity
                                 style={[
                                     styles.participantItem,
-                                    selectedParticipant?.id === item.id && styles.selectedParticipant
+                                    selectedParticipant?.id === item.id &&
+                                        styles.selectedParticipant,
                                 ]}
                                 onPress={() => setSelectedParticipant(item)}
                             >
                                 <View style={styles.participantAvatar}>
                                     <Text style={styles.avatarText}>
-                                        {item.student_name.charAt(0).toUpperCase()}
+                                        {item.student_name
+                                            .charAt(0)
+                                            .toUpperCase()}
                                     </Text>
                                 </View>
                                 <View style={styles.participantInfo}>
-                                    <Text style={styles.participantName}>{item.student_name}</Text>
-                                    <Text style={styles.participantEmail}>{item.student_email}</Text>
+                                    <Text style={styles.participantName}>
+                                        {item.student_name}
+                                    </Text>
+                                    <Text style={styles.participantEmail}>
+                                        {item.student_email}
+                                    </Text>
                                 </View>
                             </TouchableOpacity>
                         )}
@@ -892,14 +1447,16 @@ export default function ClassroomInterfaceScreen() {
                 {selectedParticipant ? (
                     <>
                         <View style={styles.chatHeader}>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.menuButton}
-                                onPress={() => setIsParticipantsOpen(!isParticipantsOpen)}
+                                onPress={() =>
+                                    setIsParticipantsOpen(!isParticipantsOpen)
+                                }
                             >
-                                <Ionicons 
-                                    name="menu" 
-                                    size={24} 
-                                    color={COLORS.text} 
+                                <Ionicons
+                                    name="menu"
+                                    size={24}
+                                    color={COLORS.text}
                                 />
                             </TouchableOpacity>
                             <View style={styles.chatHeaderInfo}>
@@ -915,23 +1472,41 @@ export default function ClassroomInterfaceScreen() {
                             data={messages}
                             keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <View style={[
-                                    styles.messageBubble,
-                                    item.isSender ? styles.sentMessage : styles.receivedMessage
-                                ]}>
-                                    <Text style={[
-                                        styles.messageText,
-                                        item.isSender ? styles.sentMessageText : styles.receivedMessageText
-                                    ]}>{item.text}</Text>
-                                    <Text style={[
-                                        styles.messageTime,
-                                        item.isSender ? styles.sentMessageTime : styles.receivedMessageTime
-                                    ]}>{item.time}</Text>
+                                <View
+                                    style={[
+                                        styles.messageBubble,
+                                        item.isSender
+                                            ? styles.sentMessage
+                                            : styles.receivedMessage,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.messageText,
+                                            item.isSender
+                                                ? styles.sentMessageText
+                                                : styles.receivedMessageText,
+                                        ]}
+                                    >
+                                        {item.text}
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            styles.messageTime,
+                                            item.isSender
+                                                ? styles.sentMessageTime
+                                                : styles.receivedMessageTime,
+                                        ]}
+                                    >
+                                        {item.time}
+                                    </Text>
                                 </View>
                             )}
                         />
                         <KeyboardAvoidingView
-                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                            behavior={
+                                Platform.OS === "ios" ? "padding" : "height"
+                            }
                             style={styles.messageInputContainer}
                         >
                             <TextInput
@@ -945,23 +1520,36 @@ export default function ClassroomInterfaceScreen() {
                                 style={styles.sendButton}
                                 onPress={() => {
                                     if (newMessage.trim()) {
-                                        setMessages([...messages, {
-                                            text: newMessage,
-                                            time: new Date().toLocaleTimeString(),
-                                            isSender: true
-                                        }]);
-                                        setNewMessage('');
+                                        setMessages([
+                                            ...messages,
+                                            {
+                                                text: newMessage,
+                                                time: new Date().toLocaleTimeString(),
+                                                isSender: true,
+                                            },
+                                        ]);
+                                        setNewMessage("");
                                     }
                                 }}
                             >
-                                <Ionicons name="send" size={24} color={COLORS.primary} />
+                                <Ionicons
+                                    name="send"
+                                    size={24}
+                                    color={COLORS.primary}
+                                />
                             </TouchableOpacity>
                         </KeyboardAvoidingView>
                     </>
                 ) : (
                     <View style={styles.noChatSelected}>
-                        <Ionicons name="chatbubble-outline" size={48} color={COLORS.textLight} />
-                        <Text style={styles.noChatText}>Select a participant to start chatting</Text>
+                        <Ionicons
+                            name="chatbubble-outline"
+                            size={48}
+                            color={COLORS.textLight}
+                        />
+                        <Text style={styles.noChatText}>
+                            Select a participant to start chatting
+                        </Text>
                     </View>
                 )}
             </View>
@@ -972,7 +1560,9 @@ export default function ClassroomInterfaceScreen() {
         <View style={styles.header}>
             <View style={styles.headerContent}>
                 <Text style={styles.classroomCode}>Classroom: {code}</Text>
-                <Text style={styles.welcomeText}>Welcome, {userInfo?.name}!</Text>
+                <Text style={styles.welcomeText}>
+                    Welcome, {userInfo?.name}!
+                </Text>
             </View>
             <View style={styles.headerButtons}>
                 <TouchableOpacity
@@ -980,10 +1570,10 @@ export default function ClassroomInterfaceScreen() {
                     onPress={() => setIsDarkMode(!isDarkMode)}
                     activeOpacity={0.7}
                 >
-                    <Ionicons 
-                        name={isDarkMode ? "sunny" : "moon"} 
-                        size={24} 
-                        color={COLORS.text} 
+                    <Ionicons
+                        name={isDarkMode ? "sunny" : "moon"}
+                        size={24}
+                        color={COLORS.text}
                     />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -991,10 +1581,10 @@ export default function ClassroomInterfaceScreen() {
                     onPress={handleExpand}
                     activeOpacity={0.7}
                 >
-                    <Ionicons 
-                        name={isExpanded ? "contract" : "expand"} 
-                        size={24} 
-                        color={COLORS.white} 
+                    <Ionicons
+                        name={isExpanded ? "contract" : "expand"}
+                        size={24}
+                        color={COLORS.white}
                     />
                 </TouchableOpacity>
             </View>
@@ -1003,30 +1593,215 @@ export default function ClassroomInterfaceScreen() {
 
     const renderPendingRequestOverlay = (requestStatus: any) => {
         if (!requestStatus || requestStatus.status !== "pending") return null;
-        
+
         return (
             <View style={styles.pendingRequestOverlay}>
                 <View style={styles.pendingRequestContainer}>
-                    <Text style={styles.pendingRequestText}>Request Pending</Text>
-                    <Text style={styles.pendingRequestSubtext}>Waiting for instructor's approval...</Text>
+                    <Text style={styles.pendingRequestText}>
+                        Request Pending
+                    </Text>
+                    <Text style={styles.pendingRequestSubtext}>
+                        Waiting for instructor's approval...
+                    </Text>
                     <View style={styles.pendingRequestButtons}>
                         <TouchableOpacity
                             style={styles.pendingRequestButton}
-                            onPress={() => requestToSpeakRef.current?.handleCheckRequest()}
+                            onPress={() =>
+                                requestToSpeakRef.current?.handleCheckRequest()
+                            }
                         >
-                            <Text style={styles.pendingRequestButtonText}>Check Request</Text>
+                            <Text style={styles.pendingRequestButtonText}>
+                                Check Request
+                            </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.pendingRequestButton, styles.pendingRequestButtonDanger]}
-                            onPress={() => requestToSpeakRef.current?.handleCancelRequest()}
+                            style={[
+                                styles.pendingRequestButton,
+                                styles.pendingRequestButtonDanger,
+                            ]}
+                            onPress={() =>
+                                requestToSpeakRef.current?.handleCancelRequest()
+                            }
                         >
-                            <Text style={styles.pendingRequestButtonText}>Cancel Request</Text>
+                            <Text style={styles.pendingRequestButtonText}>
+                                Cancel Request
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </View>
         );
     };
+
+    const renderSlideSection = () => (
+        <View
+            style={[
+                styles.slideSection,
+                isMobile && styles.slideSectionMobile,
+                isExpanded && styles.slideSectionExpanded,
+                isLandscape && !isExpanded && styles.slideSectionLandscape,
+            ]}
+        >
+            <View
+                style={[
+                    styles.slideBox,
+                    isExpanded && styles.slideBoxExpanded,
+                    isLandscape && !isExpanded && styles.slideBoxLandscape,
+                ]}
+            >
+                {isLoadingSlides ? (
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                ) : slides.length > 0 ? (
+                    <>
+                        {fileType === "pdf" ? (
+                            <PDFViewer
+                                uri={`${API_BASE_URL}${slides[slideIndex]?.full_path}`}
+                                currentPage={currentPage}
+                                onPageChange={setCurrentPage}
+                            />
+                        ) : fileType === "ppt" ? (
+                            <PowerPointViewer
+                                uri={`${API_BASE_URL}${slides[slideIndex]?.full_path}`}
+                                currentPage={currentPage}
+                                onPageChange={setCurrentPage}
+                            />
+                        ) : (
+                            <View style={styles.noSlidesContainer}>
+                                <Ionicons
+                                    name="document-outline"
+                                    size={48}
+                                    color={COLORS.textLight}
+                                />
+                                <Text style={styles.noSlidesText}>
+                                    Unsupported file type
+                                </Text>
+                            </View>
+                        )}
+
+                        {/* Page Navigation */}
+                        <View
+                            style={[
+                                styles.slideNavContainer,
+                                isExpanded && styles.slideNavContainerExpanded,
+                                isLandscape &&
+                                    !isExpanded &&
+                                    styles.slideNavContainerLandscape,
+                            ]}
+                        >
+                            <TouchableOpacity
+                                style={[
+                                    styles.navButton,
+                                    currentPage === 1 &&
+                                        styles.navButtonDisabled,
+                                ]}
+                                onPress={goToPrevPage}
+                                disabled={currentPage === 1}
+                            >
+                                <Ionicons
+                                    name="chevron-back"
+                                    size={20}
+                                    color={COLORS.white}
+                                />
+                            </TouchableOpacity>
+
+                            <View style={styles.slideIndicator}>
+                                <Text style={styles.slideIndicatorText}>
+                                    Page {currentPage} of {totalPages}
+                                </Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.navButton,
+                                    currentPage === totalPages &&
+                                        styles.navButtonDisabled,
+                                ]}
+                                onPress={goToNextPage}
+                                disabled={currentPage === totalPages}
+                            >
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={20}
+                                    color={COLORS.white}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    <View style={styles.noSlidesContainer}>
+                        <Ionicons
+                            name="document-outline"
+                            size={48}
+                            color={COLORS.textLight}
+                        />
+                        <Text style={styles.noSlidesText}>
+                            No slides available
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </View>
+    );
+
+    const renderFilesSection = () => (
+        <View style={styles.filesContainer}>
+            <Text style={styles.sectionTitle}>Files</Text>
+            {isLoadingFiles ? (
+                <View style={styles.noFilesContainer}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            ) : files.length > 0 ? (
+                <FlatList
+                    style={styles.fileList}
+                    data={files}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={styles.fileItem}
+                            onPress={() => handleFileDownload(item)}
+                        >
+                            <View style={styles.fileIcon}>
+                                <Ionicons
+                                    name={getFileIcon(item.file_type || "")}
+                                    size={24}
+                                    color={COLORS.white}
+                                />
+                            </View>
+                            <View style={styles.fileInfo}>
+                                <Text style={styles.fileName}>
+                                    {item.file_name}
+                                </Text>
+                                <Text style={styles.fileDate}>
+                                    {new Date(
+                                        item.created_at
+                                    ).toLocaleDateString()}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.downloadButton}
+                                onPress={() => handleFileDownload(item)}
+                            >
+                                <Ionicons
+                                    name="download-outline"
+                                    size={24}
+                                    color={COLORS.white}
+                                />
+                            </TouchableOpacity>
+                        </TouchableOpacity>
+                    )}
+                />
+            ) : (
+                <View style={styles.noFilesContainer}>
+                    <Ionicons
+                        name="document-outline"
+                        size={48}
+                        color={COLORS.textLight}
+                    />
+                    <Text style={styles.noFilesText}>No files available</Text>
+                </View>
+            )}
+        </View>
+    );
 
     if (isLoading) {
         return (
@@ -1038,164 +1813,139 @@ export default function ClassroomInterfaceScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={[
-                styles.container,
-                isMobile && styles.containerMobile,
-                isExpanded && styles.containerExpanded
-            ]}>
+            <View
+                style={[
+                    styles.container,
+                    isMobile && styles.containerMobile,
+                    isExpanded && styles.containerExpanded,
+                ]}
+            >
                 {renderHeader()}
                 {renderPendingRequestOverlay(requestStatus)}
 
                 {/* Main Content Section */}
-                <View style={[
-                    styles.mainContent,
-                    isMobile && styles.mainContentMobile,
-                    isExpanded && styles.mainContentExpanded,
-                    isLandscape && !isExpanded && styles.mainContentLandscape
-                ]}>
-                    {activeTab === 'class' && (
+                <View
+                    style={[
+                        styles.mainContent,
+                        isMobile && styles.mainContentMobile,
+                        isExpanded && styles.mainContentExpanded,
+                        isLandscape &&
+                            !isExpanded &&
+                            styles.mainContentLandscape,
+                    ]}
+                >
+                    {activeTab === "class" && (
                         <>
-                            {/* Slide Section */}
-                            <View style={[
-                                styles.slideSection,
-                                isMobile && styles.slideSectionMobile,
-                                isExpanded && styles.slideSectionExpanded,
-                                isLandscape && !isExpanded && styles.slideSectionLandscape
-                            ]}>
-                                <View style={[
-                                    styles.slideBox,
-                                    isExpanded && styles.slideBoxExpanded,
-                                    isLandscape && !isExpanded && styles.slideBoxLandscape
-                                ]}>
-                                    <Text style={[
-                                        styles.slideTitle,
-                                        isExpanded && styles.slideTitleExpanded,
-                                        isLandscape && !isExpanded && styles.slideTitleLandscape
-                                    ]}>
-                                        {slidesData[slideIndex].title}
-                                    </Text>
-                                    <Text style={[
-                                        styles.slideContent,
-                                        isExpanded && styles.slideContentExpanded,
-                                        isLandscape && !isExpanded && styles.slideContentLandscape
-                                    ]}>
-                                        {slidesData[slideIndex].content}
-                                    </Text>
-
-                                    {/* Slide Navigation */}
-                                    <View style={[
-                                        styles.slideNavContainer,
-                                        isExpanded && styles.slideNavContainerExpanded,
-                                        isLandscape && !isExpanded && styles.slideNavContainerLandscape
-                                    ]}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.navButton,
-                                                slideIndex === 0 && styles.navButtonDisabled
-                                            ]}
-                                            onPress={goToPrevSlide}
-                                            disabled={slideIndex === 0}
-                                        >
-                                            <Ionicons name="chevron-back" size={20} color={COLORS.white} />
-                                        </TouchableOpacity>
-
-                                        <View style={styles.slideIndicator}>
-                                            <Text style={styles.slideIndicatorText}>
-                                                {slideIndex + 1} / {slidesData.length}
-                                            </Text>
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.navButton,
-                                                slideIndex === slidesData.length - 1 && styles.navButtonDisabled
-                                            ]}
-                                            onPress={goToNextSlide}
-                                            disabled={slideIndex === slidesData.length - 1}
-                                        >
-                                            <Ionicons name="chevron-forward" size={20} color={COLORS.white} />
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-
+                            {renderSlideSection()}
                             {/* Side Section */}
                             {!isExpanded && (
-                                <View style={[
-                                    styles.sideSection,
-                                    isMobile && styles.sideSectionMobile,
-                                    isLandscape && styles.sideSectionLandscape
-                                ]}>
+                                <View
+                                    style={[
+                                        styles.sideSection,
+                                        isMobile && styles.sideSectionMobile,
+                                        isLandscape &&
+                                            styles.sideSectionLandscape,
+                                    ]}
+                                >
                                     <RequestToSpeak
                                         studentId={studentId}
-                                        onRequestAccepted={() => setIsRequestAccepted(true)}
+                                        onRequestAccepted={() =>
+                                            setIsRequestAccepted(true)
+                                        }
                                     />
                                 </View>
                             )}
                         </>
                     )}
-                    {activeTab === 'messages' && renderMessagesSection()}
-                    {activeTab === 'files' && (
-                        <View style={styles.filesContainer}>
-                            <Text style={styles.sectionTitle}>Files</Text>
-                            {/* Files content will go here */}
-                        </View>
-                    )}
+                    {activeTab === "messages" && renderMessagesSection()}
+                    {activeTab === "files" && renderFilesSection()}
                 </View>
 
                 {/* Bottom Navigation Bar */}
                 {!isExpanded && (
-                    <View style={[
-                        styles.tabBar,
-                        isMobile && styles.tabBarMobile,
-                        isLandscape && styles.tabBarLandscape
-                    ]}>
-                        <TouchableOpacity 
+                    <View
+                        style={[
+                            styles.tabBar,
+                            isMobile && styles.tabBarMobile,
+                            isLandscape && styles.tabBarLandscape,
+                        ]}
+                    >
+                        <TouchableOpacity
                             style={styles.tabItem}
                             activeOpacity={0.7}
-                            onPress={() => setActiveTab('class')}
+                            onPress={() => setActiveTab("class")}
                         >
-                            <Ionicons 
-                                name="people" 
-                                size={24} 
-                                color={activeTab === 'class' ? COLORS.primary : COLORS.textLight} 
+                            <Ionicons
+                                name="people"
+                                size={24}
+                                color={
+                                    activeTab === "class"
+                                        ? COLORS.primary
+                                        : COLORS.textLight
+                                }
                             />
-                            <Text style={[
-                                styles.tabLabel,
-                                activeTab === 'class' ? styles.tabLabelActive : styles.tabLabelInactive
-                            ]}>Class</Text>
+                            <Text
+                                style={[
+                                    styles.tabLabel,
+                                    activeTab === "class"
+                                        ? styles.tabLabelActive
+                                        : styles.tabLabelInactive,
+                                ]}
+                            >
+                                Class
+                            </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.tabItem}
                             activeOpacity={0.7}
-                            onPress={() => setActiveTab('messages')}
+                            onPress={() => setActiveTab("messages")}
                         >
-                            <Ionicons 
-                                name="chatbubble" 
-                                size={24} 
-                                color={activeTab === 'messages' ? COLORS.primary : COLORS.textLight} 
+                            <Ionicons
+                                name="chatbubble"
+                                size={24}
+                                color={
+                                    activeTab === "messages"
+                                        ? COLORS.primary
+                                        : COLORS.textLight
+                                }
                             />
-                            <Text style={[
-                                styles.tabLabel,
-                                activeTab === 'messages' ? styles.tabLabelActive : styles.tabLabelInactive
-                            ]}>Messages</Text>
+                            <Text
+                                style={[
+                                    styles.tabLabel,
+                                    activeTab === "messages"
+                                        ? styles.tabLabelActive
+                                        : styles.tabLabelInactive,
+                                ]}
+                            >
+                                Messages
+                            </Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.tabItem}
                             activeOpacity={0.7}
-                            onPress={() => setActiveTab('files')}
+                            onPress={() => setActiveTab("files")}
                         >
-                            <Ionicons 
-                                name="document-text" 
-                                size={24} 
-                                color={activeTab === 'files' ? COLORS.primary : COLORS.textLight} 
+                            <Ionicons
+                                name="document-text"
+                                size={24}
+                                color={
+                                    activeTab === "files"
+                                        ? COLORS.primary
+                                        : COLORS.textLight
+                                }
                             />
-                            <Text style={[
-                                styles.tabLabel,
-                                activeTab === 'files' ? styles.tabLabelActive : styles.tabLabelInactive
-                            ]}>Files</Text>
+                            <Text
+                                style={[
+                                    styles.tabLabel,
+                                    activeTab === "files"
+                                        ? styles.tabLabelActive
+                                        : styles.tabLabelInactive,
+                                ]}
+                            >
+                                Files
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 )}
