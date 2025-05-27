@@ -338,7 +338,7 @@ export function RequestToSpeak({
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
+        padding: 4,
         gap: 12,
     },
     button: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     },
     feedbackContainer: {
         backgroundColor: "#EEF2FF",
-        padding: 16,
+        padding: 10,
         borderRadius: 8,
         alignItems: "center",
         gap: 12,
@@ -371,6 +371,9 @@ const styles = StyleSheet.create({
     statusText: {
         color: "#818CF8",
         fontSize: 14,
+         paddingTop: 6, // reduce from default
+    paddingBottom: 14, 
+
     },
     buttonRow: {
         flexDirection: "row",

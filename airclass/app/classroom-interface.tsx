@@ -1035,17 +1035,19 @@ export default function ClassroomInterfaceScreen() {
     // Handle orientation changes
     const handleExpand = async () => {
         if (!isExpanded) {
-            // Lock to landscape when expanding
-            await ScreenOrientation.lockAsync(
-                ScreenOrientation.OrientationLock.LANDSCAPE
-            );
+          // Lock to landscape when expanding
+          await ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.LANDSCAPE
+          );
         } else {
-            // Unlock orientation when collapsing
-            await ScreenOrientation.unlockAsync();
+          // Force portrait when collapsing
+          await ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.PORTRAIT_UP
+          );
         }
         setIsExpanded(!isExpanded);
-    };
-
+      };
+      
     // Reset orientation when component unmounts
     useEffect(() => {
         return () => {
@@ -1857,8 +1859,12 @@ export default function ClassroomInterfaceScreen() {
                             )}
                         </>
                     )}
-                    {activeTab === "messages" && renderMessagesSection()}
-                    {activeTab === "files" && renderFilesSection()}
+                    {activeTab === 'files' && (
+                        <View style={styles.filesContainer}>
+                            <Text style={styles.sectionTitle}>Files</Text>
+                            {/* Files content will go here */}
+                        </View>
+                    )}
                 </View>
 
                 {/* Bottom Navigation Bar */}
@@ -1899,33 +1905,7 @@ export default function ClassroomInterfaceScreen() {
                         <TouchableOpacity
                             style={styles.tabItem}
                             activeOpacity={0.7}
-                            onPress={() => setActiveTab("messages")}
-                        >
-                            <Ionicons
-                                name="chatbubble"
-                                size={24}
-                                color={
-                                    activeTab === "messages"
-                                        ? COLORS.primary
-                                        : COLORS.textLight
-                                }
-                            />
-                            <Text
-                                style={[
-                                    styles.tabLabel,
-                                    activeTab === "messages"
-                                        ? styles.tabLabelActive
-                                        : styles.tabLabelInactive,
-                                ]}
-                            >
-                                Messages
-                            </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.tabItem}
-                            activeOpacity={0.7}
-                            onPress={() => setActiveTab("files")}
+                            onPress={() => setActiveTab('files')}
                         >
                             <Ionicons
                                 name="document-text"
