@@ -707,17 +707,19 @@ export default function ClassroomInterfaceScreen() {
     // Handle orientation changes
     const handleExpand = async () => {
         if (!isExpanded) {
-            // Lock to landscape when expanding
-            await ScreenOrientation.lockAsync(
-                ScreenOrientation.OrientationLock.LANDSCAPE
-            );
+          // Lock to landscape when expanding
+          await ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.LANDSCAPE
+          );
         } else {
-            // Unlock orientation when collapsing
-            await ScreenOrientation.unlockAsync();
+          // Force portrait when collapsing
+          await ScreenOrientation.lockAsync(
+            ScreenOrientation.OrientationLock.PORTRAIT_UP
+          );
         }
         setIsExpanded(!isExpanded);
-    };
-
+      };
+      
     // Reset orientation when component unmounts
     useEffect(() => {
         return () => {
@@ -839,134 +841,6 @@ export default function ClassroomInterfaceScreen() {
     const handleAttendance = () => {
         router.push("/attendance");
     };
-
-    const renderMessagesSection = () => (
-        <View style={styles.messagesContainer}>
-            {/* Participants Side Menu */}
-            <View style={[
-                styles.participantsList,
-                !isParticipantsOpen && styles.participantsListCollapsed
-            ]}>
-                <View style={styles.participantsHeader}>
-                    <Text style={styles.sectionTitle}>Class Participants</Text>
-                    <TouchableOpacity 
-                        style={styles.collapseButton}
-                        onPress={() => setIsParticipantsOpen(!isParticipantsOpen)}
-                    >
-                        <Ionicons 
-                            name={isParticipantsOpen ? "chevron-back" : "chevron-forward"} 
-                            size={24} 
-                            color={COLORS.textLight} 
-                        />
-                    </TouchableOpacity>
-                </View>
-                {isParticipantsOpen && (
-                    <FlatList
-                        data={classParticipants}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.participantItem,
-                                    selectedParticipant?.id === item.id && styles.selectedParticipant
-                                ]}
-                                onPress={() => setSelectedParticipant(item)}
-                            >
-                                <View style={styles.participantAvatar}>
-                                    <Text style={styles.avatarText}>
-                                        {item.student_name.charAt(0).toUpperCase()}
-                                    </Text>
-                                </View>
-                                <View style={styles.participantInfo}>
-                                    <Text style={styles.participantName}>{item.student_name}</Text>
-                                    <Text style={styles.participantEmail}>{item.student_email}</Text>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                    />
-                )}
-            </View>
-
-            {/* Main Chat Area */}
-            <View style={styles.chatContainer}>
-                {selectedParticipant ? (
-                    <>
-                        <View style={styles.chatHeader}>
-                            <TouchableOpacity 
-                                style={styles.menuButton}
-                                onPress={() => setIsParticipantsOpen(!isParticipantsOpen)}
-                            >
-                                <Ionicons 
-                                    name="menu" 
-                                    size={24} 
-                                    color={COLORS.text} 
-                                />
-                            </TouchableOpacity>
-                            <View style={styles.chatHeaderInfo}>
-                                <Text style={styles.chatHeaderText}>
-                                    {selectedParticipant.student_name}
-                                </Text>
-                                <Text style={styles.chatHeaderSubtext}>
-                                    {selectedParticipant.student_email}
-                                </Text>
-                            </View>
-                        </View>
-                        <FlatList
-                            data={messages}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <View style={[
-                                    styles.messageBubble,
-                                    item.isSender ? styles.sentMessage : styles.receivedMessage
-                                ]}>
-                                    <Text style={[
-                                        styles.messageText,
-                                        item.isSender ? styles.sentMessageText : styles.receivedMessageText
-                                    ]}>{item.text}</Text>
-                                    <Text style={[
-                                        styles.messageTime,
-                                        item.isSender ? styles.sentMessageTime : styles.receivedMessageTime
-                                    ]}>{item.time}</Text>
-                                </View>
-                            )}
-                        />
-                        <KeyboardAvoidingView
-                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                            style={styles.messageInputContainer}
-                        >
-                            <TextInput
-                                style={styles.messageInput}
-                                value={newMessage}
-                                onChangeText={setNewMessage}
-                                placeholder="Type a message..."
-                                placeholderTextColor={COLORS.textLight}
-                            />
-                            <TouchableOpacity
-                                style={styles.sendButton}
-                                onPress={() => {
-                                    if (newMessage.trim()) {
-                                        setMessages([...messages, {
-                                            text: newMessage,
-                                            time: new Date().toLocaleTimeString(),
-                                            isSender: true
-                                        }]);
-                                        setNewMessage('');
-                                    }
-                                }}
-                            >
-                                <Ionicons name="send" size={24} color={COLORS.primary} />
-                            </TouchableOpacity>
-                        </KeyboardAvoidingView>
-                    </>
-                ) : (
-                    <View style={styles.noChatSelected}>
-                        <Ionicons name="chatbubble-outline" size={48} color={COLORS.textLight} />
-                        <Text style={styles.noChatText}>Select a participant to start chatting</Text>
-                    </View>
-                )}
-            </View>
-        </View>
-    );
 
     const renderHeader = () => (
         <View style={styles.header}>
@@ -1134,7 +1008,6 @@ export default function ClassroomInterfaceScreen() {
                             )}
                         </>
                     )}
-                    {activeTab === 'messages' && renderMessagesSection()}
                     {activeTab === 'files' && (
                         <View style={styles.filesContainer}>
                             <Text style={styles.sectionTitle}>Files</Text>
@@ -1164,22 +1037,6 @@ export default function ClassroomInterfaceScreen() {
                                 styles.tabLabel,
                                 activeTab === 'class' ? styles.tabLabelActive : styles.tabLabelInactive
                             ]}>Class</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity 
-                            style={styles.tabItem}
-                            activeOpacity={0.7}
-                            onPress={() => setActiveTab('messages')}
-                        >
-                            <Ionicons 
-                                name="chatbubble" 
-                                size={24} 
-                                color={activeTab === 'messages' ? COLORS.primary : COLORS.textLight} 
-                            />
-                            <Text style={[
-                                styles.tabLabel,
-                                activeTab === 'messages' ? styles.tabLabelActive : styles.tabLabelInactive
-                            ]}>Messages</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 

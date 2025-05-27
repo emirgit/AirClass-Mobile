@@ -371,8 +371,8 @@ const styles = StyleSheet.create({
     statusText: {
         color: "#818CF8",
         fontSize: 14,
-        paddingTop: 6, // reduce from default
-        paddingBottom: 14, 
+         paddingTop: 6, // reduce from default
+    paddingBottom: 14, 
 
     },
     buttonRow: {
