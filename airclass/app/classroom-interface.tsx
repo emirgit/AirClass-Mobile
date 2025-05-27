@@ -142,7 +142,7 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     containerMobile: {
-        padding: 16,
+        padding: -100,
     },
     containerExpanded: {
         backgroundColor: COLORS.background,
@@ -373,7 +373,7 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
         paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-        paddingTop: 8,
+        paddingTop: 4,
     },
     tabBarMobile: {
         paddingBottom: Platform.OS === 'ios' ? 20 : 8,
@@ -391,7 +391,7 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         color: COLORS.primary,
-        marginTop: 4,
+        marginTop: 2,
     },
     tabLabelInactive: {
         color: COLORS.textLight,
@@ -597,7 +597,7 @@ const createStyles = (COLORS: Theme) => StyleSheet.create({
     },
     pendingRequestOverlay: {
         position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 320 : 300,
+        bottom: Platform.OS === 'ios' ? 400 : 380,
         left: '50%',
         transform: [{ translateX: -175 }],
         backgroundColor: "#7C3AED",
