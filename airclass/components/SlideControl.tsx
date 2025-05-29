@@ -1,32 +1,102 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { useWebSocket } from "../hooks/useWebSocket";
+import React, { useState } from "react";
+import {
+    View,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+    ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_BASE_URL } from "../constants/api";
 
 export function SlideControl() {
-    const { sendMessage } = useWebSocket();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const sendSlideControlRequest = async (action: "next" | "previous") => {
+        try {
+            setIsLoading(true);
+            const token = await AsyncStorage.getItem("jwtToken");
+            const classroomId = await AsyncStorage.getItem("classroomId");
+            const slideId = await AsyncStorage.getItem("currentSlideId");
+
+            if (!token || !classroomId || !slideId) {
+                Alert.alert(
+                    "Error",
+                    "Missing required data. Please try again."
+                );
+                return;
+            }
+
+            const response = await fetch(
+                `${API_BASE_URL}/airclass-api/slide-control`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        slide_id: slideId,
+                        classroom_id: classroomId,
+                        action: action,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to control slide");
+            }
+
+            if (data.status === false) {
+                throw new Error(data.message || "Failed to control slide");
+            }
+        } catch (error) {
+            console.error("Error controlling slide:", error);
+            Alert.alert(
+                "Error",
+                error instanceof Error
+                    ? error.message
+                    : "Failed to control slide"
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleNext = () => {
-        sendMessage({
-            type: "slideControl",
-            command: "next",
-        });
+        sendSlideControlRequest("next");
     };
 
     const handlePrevious = () => {
-        sendMessage({
-            type: "slideControl",
-            command: "previous",
-        });
+        sendSlideControlRequest("previous");
     };
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity style={[styles.button]} onPress={handlePrevious}>
-                <Ionicons name="chevron-back" size={32} color="#fff" />
+            <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handlePrevious}
+                disabled={isLoading}
+            >
+                {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                ) : (
+                    <Ionicons name="chevron-back" size={32} color="#fff" />
+                )}
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button]} onPress={handleNext}>
-                <Ionicons name="chevron-forward" size={32} color="#fff" />
+            <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handleNext}
+                disabled={isLoading}
+            >
+                {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                ) : (
+                    <Ionicons name="chevron-forward" size={32} color="#fff" />
+                )}
             </TouchableOpacity>
         </View>
     );
@@ -58,5 +128,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
+    },
+    buttonDisabled: {
+        opacity: 0.7,
     },
 });

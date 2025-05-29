@@ -37,16 +37,12 @@ type Theme = {
     error: string;
     warning: string;
     tabBarBg: string;
-    messageSent: string;
-    messageReceived: string;
-    messageText: string;
-    messageTime: string;
-    inputBg: string;
-    avatarBg: string;
-    avatarText: string;
     selectedBg: string;
     white: string;
     slideIndicatorText: string;
+    inputBg: string;
+    avatarBg: string;
+    avatarText: string;
 };
 
 // Theme colors
@@ -63,16 +59,12 @@ const LIGHT_THEME: Theme = {
     error: "#EF4444",
     warning: "#F59E0B",
     tabBarBg: "#FFFFFF",
-    messageSent: "#4F46E5",
-    messageReceived: "#F1F5F9",
-    messageText: "#FFFFFF",
-    messageTime: "#94A3B8",
-    inputBg: "#F1F5F9",
-    avatarBg: "#4F46E5",
-    avatarText: "#FFFFFF",
     selectedBg: "#EEF2FF",
     white: "#FFFFFF",
     slideIndicatorText: "#1E293B",
+    inputBg: "#F1F5F9",
+    avatarBg: "#4F46E5",
+    avatarText: "#FFFFFF",
 };
 
 const DARK_THEME: Theme = {
@@ -88,16 +80,12 @@ const DARK_THEME: Theme = {
     error: "#F87171",
     warning: "#FBBF24",
     tabBarBg: "#1E293B",
-    messageSent: "#818CF8",
-    messageReceived: "#334155",
-    messageText: "#F8FAFC",
-    messageTime: "#94A3B8",
-    inputBg: "#334155",
-    avatarBg: "#818CF8",
-    avatarText: "#F8FAFC",
     selectedBg: "#1E3A8A",
     white: "#FFFFFF",
     slideIndicatorText: "#000000",
+    inputBg: "#334155",
+    avatarBg: "#818CF8",
+    avatarText: "#F8FAFC",
 };
 
 const slidesData = [
@@ -124,12 +112,6 @@ interface Participant {
     updated_at: string;
 }
 
-interface Message {
-    text: string;
-    time: string;
-    isSender: boolean;
-}
-
 interface AttendanceResponse {
     status: boolean;
     message: string;
@@ -148,16 +130,6 @@ interface Slide {
     file_type?: string; // 'pdf' or 'ppt' or 'pptx'
     total_pages?: number;
     current_page?: number;
-}
-
-// Add File interface
-interface File {
-    id: number;
-    classroom_id: number;
-    full_path: string;
-    created_at: string;
-    file_type?: string;
-    file_name?: string;
 }
 
 // Add base URL constant
@@ -440,150 +412,6 @@ const createStyles = (COLORS: Theme) =>
         tabLabelInactive: {
             color: COLORS.textLight,
         },
-        messagesContainer: {
-            flex: 1,
-            flexDirection: "row",
-            backgroundColor: COLORS.background,
-        },
-        participantsList: {
-            width: 280,
-            borderRightWidth: 1,
-            borderRightColor: COLORS.border,
-            backgroundColor: COLORS.surface,
-        },
-        participantsListCollapsed: {
-            width: 0,
-            overflow: "hidden",
-        },
-        participantsHeader: {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: COLORS.border,
-            backgroundColor: COLORS.surface,
-        },
-        collapseButton: {
-            padding: 8,
-            borderRadius: 8,
-            backgroundColor: COLORS.inputBg,
-        },
-        menuButton: {
-            padding: 8,
-            marginRight: 12,
-            borderRadius: 8,
-            backgroundColor: COLORS.inputBg,
-        },
-        chatContainer: {
-            flex: 1,
-            backgroundColor: COLORS.surface,
-        },
-        chatHeader: {
-            flexDirection: "row",
-            alignItems: "center",
-            padding: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: COLORS.border,
-            backgroundColor: COLORS.surface,
-        },
-        chatHeaderInfo: {
-            flex: 1,
-        },
-        chatHeaderText: {
-            fontSize: 18,
-            fontWeight: "600",
-            color: COLORS.text,
-        },
-        chatHeaderSubtext: {
-            fontSize: 12,
-            color: COLORS.textLight,
-            marginTop: 2,
-        },
-        noChatSelected: {
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: COLORS.surface,
-        },
-        noChatText: {
-            marginTop: 16,
-            fontSize: 16,
-            color: COLORS.textLight,
-            textAlign: "center",
-        },
-        messageBubble: {
-            maxWidth: "80%",
-            padding: 12,
-            borderRadius: 20,
-            marginVertical: 4,
-            marginHorizontal: 16,
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
-        },
-        sentMessage: {
-            backgroundColor: COLORS.messageSent,
-            alignSelf: "flex-end",
-            borderBottomRightRadius: 4,
-        },
-        receivedMessage: {
-            backgroundColor: COLORS.messageReceived,
-            alignSelf: "flex-start",
-            borderBottomLeftRadius: 4,
-        },
-        messageText: {
-            fontSize: 14,
-        },
-        sentMessageText: {
-            color: COLORS.messageText,
-        },
-        receivedMessageText: {
-            color: COLORS.text,
-        },
-        messageTime: {
-            fontSize: 10,
-            marginTop: 4,
-        },
-        sentMessageTime: {
-            color: COLORS.messageText,
-            opacity: 0.7,
-        },
-        receivedMessageTime: {
-            color: COLORS.messageTime,
-        },
-        messageInputContainer: {
-            flexDirection: "row",
-            padding: 16,
-            borderTopWidth: 1,
-            borderTopColor: COLORS.border,
-            backgroundColor: COLORS.surface,
-        },
-        messageInput: {
-            flex: 1,
-            backgroundColor: COLORS.inputBg,
-            borderRadius: 24,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            marginRight: 8,
-            fontSize: 14,
-            color: COLORS.text,
-        },
-        sendButton: {
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: COLORS.primary,
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 4,
-        },
         tabLabelActive: {
             color: COLORS.primary,
         },
@@ -591,6 +419,54 @@ const createStyles = (COLORS: Theme) =>
             flex: 1,
             backgroundColor: COLORS.surface,
             padding: 16,
+        },
+        filesList: {
+            flex: 1,
+        },
+        fileItem: {
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: COLORS.border,
+            backgroundColor: COLORS.surface,
+        },
+        fileIcon: {
+            marginRight: 12,
+        },
+        fileInfo: {
+            flex: 1,
+        },
+        fileName: {
+            fontSize: 16,
+            fontWeight: "500",
+            color: COLORS.text,
+            marginBottom: 4,
+        },
+        fileDate: {
+            fontSize: 12,
+            color: COLORS.textLight,
+        },
+        fileType: {
+            fontSize: 12,
+            color: COLORS.primary,
+            backgroundColor: COLORS.selectedBg,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 4,
+            marginLeft: 8,
+        },
+        noFilesContainer: {
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+        },
+        noFilesText: {
+            marginTop: 16,
+            fontSize: 16,
+            color: COLORS.textLight,
+            textAlign: "center",
         },
         sectionTitle: {
             fontSize: 18,
@@ -617,9 +493,9 @@ const createStyles = (COLORS: Theme) =>
             marginRight: 12,
             shadowColor: COLORS.primary,
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
+            shadowOpacity: 0.1,
             shadowRadius: 4,
-            elevation: 4,
+            elevation: 2,
         },
         avatarText: {
             color: COLORS.avatarText,
@@ -727,62 +603,6 @@ const createStyles = (COLORS: Theme) =>
             padding: 24,
         },
         noSlidesText: {
-            marginTop: 16,
-            fontSize: 16,
-            color: COLORS.textLight,
-            textAlign: "center",
-        },
-        fileList: {
-            flex: 1,
-            marginTop: 16,
-        },
-        fileItem: {
-            flexDirection: "row",
-            alignItems: "center",
-            padding: 16,
-            backgroundColor: COLORS.white,
-            borderRadius: 12,
-            marginBottom: 12,
-            shadowColor: COLORS.primary,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
-        },
-        fileIcon: {
-            width: 40,
-            height: 40,
-            borderRadius: 8,
-            backgroundColor: COLORS.primaryLight,
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 12,
-        },
-        fileInfo: {
-            flex: 1,
-        },
-        fileName: {
-            fontSize: 16,
-            fontWeight: "600",
-            color: COLORS.text,
-            marginBottom: 4,
-        },
-        fileDate: {
-            fontSize: 12,
-            color: COLORS.textLight,
-        },
-        downloadButton: {
-            padding: 8,
-            borderRadius: 8,
-            backgroundColor: COLORS.primary,
-        },
-        noFilesContainer: {
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24,
-        },
-        noFilesText: {
             marginTop: 16,
             fontSize: 16,
             color: COLORS.textLight,
@@ -990,15 +810,10 @@ export default function ClassroomInterfaceScreen() {
     const router = useRouter();
     const [isExpanded, setIsExpanded] = useState(false);
     const [dimensions, setDimensions] = useState(Dimensions.get("window"));
-    const [activeTab, setActiveTab] = useState("class");
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [classParticipants, setClassParticipants] = useState<Participant[]>(
-        []
-    );
+    const [activeTab, setActiveTab] = useState<"class" | "files">("class");
+    const [isParticipantsOpen, setIsParticipantsOpen] = useState(true);
     const [selectedParticipant, setSelectedParticipant] =
         useState<Participant | null>(null);
-    const [isParticipantsOpen, setIsParticipantsOpen] = useState(true);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [requestStatus, setRequestStatus] = useState<any>(null);
     const [slides, setSlides] = useState<Slide[]>([]);
@@ -1006,8 +821,6 @@ export default function ClassroomInterfaceScreen() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [fileType, setFileType] = useState<string>("unknown");
-    const [files, setFiles] = useState<File[]>([]);
-    const [isLoadingFiles, setIsLoadingFiles] = useState(true);
     const COLORS = isDarkMode ? DARK_THEME : LIGHT_THEME;
     const styles = createStyles(COLORS);
     const requestToSpeakRef = React.useRef<any>(null);
@@ -1035,19 +848,17 @@ export default function ClassroomInterfaceScreen() {
     // Handle orientation changes
     const handleExpand = async () => {
         if (!isExpanded) {
-          // Lock to landscape when expanding
-          await ScreenOrientation.lockAsync(
-            ScreenOrientation.OrientationLock.LANDSCAPE
-          );
+            // Lock to landscape when expanding
+            await ScreenOrientation.lockAsync(
+                ScreenOrientation.OrientationLock.LANDSCAPE
+            );
         } else {
-          // Force portrait when collapsing
-          await ScreenOrientation.lockAsync(
-            ScreenOrientation.OrientationLock.PORTRAIT_UP
-          );
+            // Unlock orientation when collapsing
+            await ScreenOrientation.unlockAsync();
         }
         setIsExpanded(!isExpanded);
-      };
-      
+    };
+
     // Reset orientation when component unmounts
     useEffect(() => {
         return () => {
@@ -1145,7 +956,7 @@ export default function ClassroomInterfaceScreen() {
 
                 const data: AttendanceResponse = await response.json();
                 if (data.status && data.data?.attendance_list) {
-                    setClassParticipants(data.data.attendance_list);
+                    setSelectedParticipant(data.data.attendance_list[0]);
                     console.log(`Fetched ${data.data.total_students} students`);
                 } else {
                     console.error(
@@ -1278,363 +1089,6 @@ export default function ClassroomInterfaceScreen() {
         router.push("/attendance");
     };
 
-    // Add files fetching effect
-    useEffect(() => {
-        const fetchFiles = async () => {
-            try {
-                const token = await AsyncStorage.getItem("jwtToken");
-                const classroomId = await AsyncStorage.getItem("classroomId");
-                if (!token || !classroomId) {
-                    console.error("[fetchFiles] Missing required data:", {
-                        hasToken: !!token,
-                        classroomId,
-                        timestamp: new Date().toISOString(),
-                    });
-                    return;
-                }
-
-                console.log("[fetchFiles] Starting fetch for classroom:", {
-                    classroomId,
-                    timestamp: new Date().toISOString(),
-                });
-
-                const response = await fetch(
-                    `${API_BASE_URL}/airclass-api/slide?classroom_id=${classroomId}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                const data = await response.json();
-                console.log("[fetchFiles] API Response:", {
-                    status: data.status,
-                    message: data.message,
-                    fileCount: Array.isArray(data.data) ? data.data.length : 0,
-                    timestamp: new Date().toISOString(),
-                });
-
-                if (data.status && Array.isArray(data.data)) {
-                    const processedFiles = data.data.map((file: File) => {
-                        const fileType = getFileType(file.full_path);
-                        const fileName =
-                            file.full_path.split("/").pop() || "Unknown file";
-                        console.log("[fetchFiles] Processing file:", {
-                            id: file.id,
-                            path: file.full_path,
-                            fileType,
-                            fileName,
-                            timestamp: new Date().toISOString(),
-                        });
-                        return {
-                            ...file,
-                            file_type: fileType,
-                            file_name: fileName,
-                        };
-                    });
-
-                    setFiles(processedFiles);
-                } else {
-                    console.error("[fetchFiles] Invalid API response:", {
-                        status: data.status,
-                        message: data.message,
-                        data: data.data,
-                        timestamp: new Date().toISOString(),
-                    });
-                }
-            } catch (error) {
-                console.error("[fetchFiles] Error:", {
-                    error,
-                    timestamp: new Date().toISOString(),
-                });
-            } finally {
-                setIsLoadingFiles(false);
-            }
-        };
-
-        if (activeTab === "files") {
-            fetchFiles();
-        }
-    }, [activeTab]);
-
-    const handleFileDownload = (file: File) => {
-        const fileUrl = `${API_BASE_URL}${file.full_path}`;
-        Linking.openURL(fileUrl).catch((err) => {
-            console.error("[handleFileDownload] Error opening URL:", {
-                error: err,
-                url: fileUrl,
-                timestamp: new Date().toISOString(),
-            });
-            Alert.alert("Error", "Could not open the file. Please try again.");
-        });
-    };
-
-    const getFileIcon = (fileType: string) => {
-        switch (fileType) {
-            case "pdf":
-                return "document-text";
-            case "ppt":
-                return "easel";
-            default:
-                return "document";
-        }
-    };
-
-    const renderMessagesSection = () => (
-        <View style={styles.messagesContainer}>
-            {/* Participants Side Menu */}
-            <View
-                style={[
-                    styles.participantsList,
-                    !isParticipantsOpen && styles.participantsListCollapsed,
-                ]}
-            >
-                <View style={styles.participantsHeader}>
-                    <Text style={styles.sectionTitle}>Class Participants</Text>
-                    <TouchableOpacity
-                        style={styles.collapseButton}
-                        onPress={() =>
-                            setIsParticipantsOpen(!isParticipantsOpen)
-                        }
-                    >
-                        <Ionicons
-                            name={
-                                isParticipantsOpen
-                                    ? "chevron-back"
-                                    : "chevron-forward"
-                            }
-                            size={24}
-                            color={COLORS.textLight}
-                        />
-                    </TouchableOpacity>
-                </View>
-                {isParticipantsOpen && (
-                    <FlatList
-                        data={classParticipants}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.participantItem,
-                                    selectedParticipant?.id === item.id &&
-                                        styles.selectedParticipant,
-                                ]}
-                                onPress={() => setSelectedParticipant(item)}
-                            >
-                                <View style={styles.participantAvatar}>
-                                    <Text style={styles.avatarText}>
-                                        {item.student_name
-                                            .charAt(0)
-                                            .toUpperCase()}
-                                    </Text>
-                                </View>
-                                <View style={styles.participantInfo}>
-                                    <Text style={styles.participantName}>
-                                        {item.student_name}
-                                    </Text>
-                                    <Text style={styles.participantEmail}>
-                                        {item.student_email}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                    />
-                )}
-            </View>
-
-            {/* Main Chat Area */}
-            <View style={styles.chatContainer}>
-                {selectedParticipant ? (
-                    <>
-                        <View style={styles.chatHeader}>
-                            <TouchableOpacity
-                                style={styles.menuButton}
-                                onPress={() =>
-                                    setIsParticipantsOpen(!isParticipantsOpen)
-                                }
-                            >
-                                <Ionicons
-                                    name="menu"
-                                    size={24}
-                                    color={COLORS.text}
-                                />
-                            </TouchableOpacity>
-                            <View style={styles.chatHeaderInfo}>
-                                <Text style={styles.chatHeaderText}>
-                                    {selectedParticipant.student_name}
-                                </Text>
-                                <Text style={styles.chatHeaderSubtext}>
-                                    {selectedParticipant.student_email}
-                                </Text>
-                            </View>
-                        </View>
-                        <FlatList
-                            data={messages}
-                            keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <View
-                                    style={[
-                                        styles.messageBubble,
-                                        item.isSender
-                                            ? styles.sentMessage
-                                            : styles.receivedMessage,
-                                    ]}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.messageText,
-                                            item.isSender
-                                                ? styles.sentMessageText
-                                                : styles.receivedMessageText,
-                                        ]}
-                                    >
-                                        {item.text}
-                                    </Text>
-                                    <Text
-                                        style={[
-                                            styles.messageTime,
-                                            item.isSender
-                                                ? styles.sentMessageTime
-                                                : styles.receivedMessageTime,
-                                        ]}
-                                    >
-                                        {item.time}
-                                    </Text>
-                                </View>
-                            )}
-                        />
-                        <KeyboardAvoidingView
-                            behavior={
-                                Platform.OS === "ios" ? "padding" : "height"
-                            }
-                            style={styles.messageInputContainer}
-                        >
-                            <TextInput
-                                style={styles.messageInput}
-                                value={newMessage}
-                                onChangeText={setNewMessage}
-                                placeholder="Type a message..."
-                                placeholderTextColor={COLORS.textLight}
-                            />
-                            <TouchableOpacity
-                                style={styles.sendButton}
-                                onPress={() => {
-                                    if (newMessage.trim()) {
-                                        setMessages([
-                                            ...messages,
-                                            {
-                                                text: newMessage,
-                                                time: new Date().toLocaleTimeString(),
-                                                isSender: true,
-                                            },
-                                        ]);
-                                        setNewMessage("");
-                                    }
-                                }}
-                            >
-                                <Ionicons
-                                    name="send"
-                                    size={24}
-                                    color={COLORS.primary}
-                                />
-                            </TouchableOpacity>
-                        </KeyboardAvoidingView>
-                    </>
-                ) : (
-                    <View style={styles.noChatSelected}>
-                        <Ionicons
-                            name="chatbubble-outline"
-                            size={48}
-                            color={COLORS.textLight}
-                        />
-                        <Text style={styles.noChatText}>
-                            Select a participant to start chatting
-                        </Text>
-                    </View>
-                )}
-            </View>
-        </View>
-    );
-
-    const renderHeader = () => (
-        <View style={styles.header}>
-            <View style={styles.headerContent}>
-                <Text style={styles.classroomCode}>Classroom: {code}</Text>
-                <Text style={styles.welcomeText}>
-                    Welcome, {userInfo?.name}!
-                </Text>
-            </View>
-            <View style={styles.headerButtons}>
-                <TouchableOpacity
-                    style={styles.themeButton}
-                    onPress={() => setIsDarkMode(!isDarkMode)}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons
-                        name={isDarkMode ? "sunny" : "moon"}
-                        size={24}
-                        color={COLORS.text}
-                    />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.expandButton}
-                    onPress={handleExpand}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons
-                        name={isExpanded ? "contract" : "expand"}
-                        size={24}
-                        color={COLORS.white}
-                    />
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    const renderPendingRequestOverlay = (requestStatus: any) => {
-        if (!requestStatus || requestStatus.status !== "pending") return null;
-
-        return (
-            <View style={styles.pendingRequestOverlay}>
-                <View style={styles.pendingRequestContainer}>
-                    <Text style={styles.pendingRequestText}>
-                        Request Pending
-                    </Text>
-                    <Text style={styles.pendingRequestSubtext}>
-                        Waiting for instructor's approval...
-                    </Text>
-                    <View style={styles.pendingRequestButtons}>
-                        <TouchableOpacity
-                            style={styles.pendingRequestButton}
-                            onPress={() =>
-                                requestToSpeakRef.current?.handleCheckRequest()
-                            }
-                        >
-                            <Text style={styles.pendingRequestButtonText}>
-                                Check Request
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[
-                                styles.pendingRequestButton,
-                                styles.pendingRequestButtonDanger,
-                            ]}
-                            onPress={() =>
-                                requestToSpeakRef.current?.handleCancelRequest()
-                            }
-                        >
-                            <Text style={styles.pendingRequestButtonText}>
-                                Cancel Request
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        );
-    };
-
     const renderSlideSection = () => (
         <View
             style={[
@@ -1745,54 +1199,119 @@ export default function ClassroomInterfaceScreen() {
         </View>
     );
 
-    const renderFilesSection = () => (
-        <View style={styles.filesContainer}>
-            <Text style={styles.sectionTitle}>Files</Text>
-            {isLoadingFiles ? (
-                <View style={styles.noFilesContainer}>
-                    <ActivityIndicator size="large" color={COLORS.primary} />
-                </View>
-            ) : files.length > 0 ? (
-                <FlatList
-                    style={styles.fileList}
-                    data={files}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <View style={styles.headerContent}>
+                <Text style={styles.classroomCode}>Classroom: {code}</Text>
+                <Text style={styles.welcomeText}>
+                    Welcome, {userInfo?.name}!
+                </Text>
+            </View>
+            <View style={styles.headerButtons}>
+                <TouchableOpacity
+                    style={styles.themeButton}
+                    onPress={() => setIsDarkMode(!isDarkMode)}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name={isDarkMode ? "sunny" : "moon"}
+                        size={24}
+                        color={COLORS.text}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.expandButton}
+                    onPress={handleExpand}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name={isExpanded ? "contract" : "expand"}
+                        size={24}
+                        color={COLORS.white}
+                    />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
+    const renderPendingRequestOverlay = (requestStatus: any) => {
+        if (!requestStatus || requestStatus.status !== "pending") return null;
+
+        return (
+            <View style={styles.pendingRequestOverlay}>
+                <View style={styles.pendingRequestContainer}>
+                    <Text style={styles.pendingRequestText}>
+                        Request Pending
+                    </Text>
+                    <Text style={styles.pendingRequestSubtext}>
+                        Waiting for instructor's approval...
+                    </Text>
+                    <View style={styles.pendingRequestButtons}>
                         <TouchableOpacity
-                            style={styles.fileItem}
-                            onPress={() => handleFileDownload(item)}
+                            style={styles.pendingRequestButton}
+                            onPress={() =>
+                                requestToSpeakRef.current?.handleCheckRequest()
+                            }
                         >
-                            <View style={styles.fileIcon}>
-                                <Ionicons
-                                    name={getFileIcon(item.file_type || "")}
-                                    size={24}
-                                    color={COLORS.white}
-                                />
-                            </View>
-                            <View style={styles.fileInfo}>
-                                <Text style={styles.fileName}>
-                                    {item.file_name}
-                                </Text>
-                                <Text style={styles.fileDate}>
-                                    {new Date(
-                                        item.created_at
-                                    ).toLocaleDateString()}
-                                </Text>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.downloadButton}
-                                onPress={() => handleFileDownload(item)}
-                            >
-                                <Ionicons
-                                    name="download-outline"
-                                    size={24}
-                                    color={COLORS.white}
-                                />
-                            </TouchableOpacity>
+                            <Text style={styles.pendingRequestButtonText}>
+                                Check Request
+                            </Text>
                         </TouchableOpacity>
-                    )}
-                />
-            ) : (
+                        <TouchableOpacity
+                            style={[
+                                styles.pendingRequestButton,
+                                styles.pendingRequestButtonDanger,
+                            ]}
+                            onPress={() =>
+                                requestToSpeakRef.current?.handleCancelRequest()
+                            }
+                        >
+                            <Text style={styles.pendingRequestButtonText}>
+                                Cancel Request
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        );
+    };
+
+    // Add FilesSection component after styles and COLORS are defined
+    const FilesSection = () => {
+        const handleFilePress = (slide: Slide) => {
+            const fileUrl = `${API_BASE_URL}${slide.full_path}`;
+            Linking.openURL(fileUrl).catch((err) => {
+                console.error("Error opening file:", err);
+                Alert.alert(
+                    "Error",
+                    "Could not open the file. Please try again later."
+                );
+            });
+        };
+
+        const getFileIcon = (fileType?: string) => {
+            switch (fileType) {
+                case "pdf":
+                    return "document-text";
+                case "ppt":
+                case "pptx":
+                    return "easel";
+                default:
+                    return "document";
+            }
+        };
+
+        const formatDate = (dateString: string) => {
+            const date = new Date(dateString);
+            return date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            });
+        };
+
+        if (slides.length === 0) {
+            return (
                 <View style={styles.noFilesContainer}>
                     <Ionicons
                         name="document-outline"
@@ -1801,9 +1320,45 @@ export default function ClassroomInterfaceScreen() {
                     />
                     <Text style={styles.noFilesText}>No files available</Text>
                 </View>
-            )}
-        </View>
-    );
+            );
+        }
+
+        return (
+            <View style={styles.filesContainer}>
+                <Text style={styles.sectionTitle}>Class Files</Text>
+                <FlatList
+                    data={slides}
+                    keyExtractor={(item) => item.id.toString()}
+                    style={styles.filesList}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={styles.fileItem}
+                            onPress={() => handleFilePress(item)}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name={getFileIcon(item.file_type)}
+                                size={24}
+                                color={COLORS.primary}
+                                style={styles.fileIcon}
+                            />
+                            <View style={styles.fileInfo}>
+                                <Text style={styles.fileName}>
+                                    {item.full_path.split("/").pop()}
+                                </Text>
+                                <Text style={styles.fileDate}>
+                                    Added on {formatDate(item.created_at)}
+                                </Text>
+                            </View>
+                            <Text style={styles.fileType}>
+                                {item.file_type?.toUpperCase() || "UNKNOWN"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
+        );
+    };
 
     if (isLoading) {
         return (
@@ -1859,12 +1414,7 @@ export default function ClassroomInterfaceScreen() {
                             )}
                         </>
                     )}
-                    {activeTab === 'files' && (
-                        <View style={styles.filesContainer}>
-                            <Text style={styles.sectionTitle}>Files</Text>
-                            {/* Files content will go here */}
-                        </View>
-                    )}
+                    {activeTab === "files" && <FilesSection />}
                 </View>
 
                 {/* Bottom Navigation Bar */}
@@ -1905,7 +1455,7 @@ export default function ClassroomInterfaceScreen() {
                         <TouchableOpacity
                             style={styles.tabItem}
                             activeOpacity={0.7}
-                            onPress={() => setActiveTab('files')}
+                            onPress={() => setActiveTab("files")}
                         >
                             <Ionicons
                                 name="document-text"
